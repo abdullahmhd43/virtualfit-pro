@@ -13,7 +13,6 @@ Enterprise structure with:
 import os
 import sys
 import logging
-
 # Load .env before anything else
 from dotenv import load_dotenv
 load_dotenv()
@@ -114,6 +113,7 @@ def create_app(config_obj=None) -> Flask:
 
     app.logger.info("✅ VirtualFit Pro application created")
     return app
+    app = create_app()
 
 
 # ── Entry Point ───────────────────────────────────────────
