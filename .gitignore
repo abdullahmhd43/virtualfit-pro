@@ -1,0 +1,49 @@
+# ============================================
+#  VirtualFit Pro — .gitignore
+# ============================================
+
+# ── Environment Variables (NEVER push to GitHub!) ──
+.env
+.env.local
+.env.production
+.env.*
+
+# ── Python ──
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyc
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+venv/
+env/
+.venv/
+
+# ── Logs ──
+backend/logs/*.log
+*.log
+
+# ── Database ──
+*.db
+*.sqlite
+*.sqlite3
+
+# ── OS Files ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE / Editor ──
+.vscode/
+.idea/
+*.suo
+*.user
+
+# ── Temp Files ──
+*.tmp
+*.temp
+*.bak

@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Admin access protection
+if(sessionStorage.getItem('vf_admin') !== '1') {
+    window.location.replace('admin-login.html');
+}
+</script>
+
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Reports — VirtualFit Pro</title>
+<link rel="stylesheet" href="css/main.css?v=20260513">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box}
+.rep-page{padding:100px 0 60px;min-height:100vh}
+.rep-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:14px}
+.rep-header h1{font-family:var(--font-head);font-size:28px;font-weight:900}
+.date-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.date-inp{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);font-family:var(--font-body);outline:none}
+.date-inp:focus{border-color:rgba(232,184,109,.5)}
+/* TABS */
+.rep-tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:14px}
+.rtab{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid var(--border);background:var(--bg2);color:var(--muted);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:7px}
+.rtab:hover{color:var(--text);border-color:var(--border2)}
+.rtab.active{background:rgba(232,184,109,.12);border-color:rgba(232,184,109,.4);color:var(--gold)}
+.rsec{display:none}.rsec.active{display:block}
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:rgba(232,184,109,.04)}
+.kpi-val{font-size:28px;font-weight:900;color:var(--gold)}
+.kpi-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.kpi-change{font-size:11px;margin-top:8px;display:flex;align-items:center;gap:4px}
+.up{color:var(--green)}.down{color:var(--red)}
+/* CHARTS */
+.chart-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.chart-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px}
+.chart-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px}
+.chart-box h3{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.chart-box h3 i{color:var(--gold)}
+/* TABLE */
+.rep-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.rep-tbl th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.rep-tbl td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.03)}
+.rep-tbl tr:hover td{background:rgba(255,255,255,.02)}
+.tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:20px}
+.tbl-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px}
+.tbl-hd h3{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.tbl-hd h3 i{color:var(--gold)}
+/* PROFIT BOX */
+.profit-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.psbox{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;text-align:center}
+.psbox.green{background:rgba(76,222,138,.04);border-color:rgba(76,222,138,.2)}
+.psbox.red{background:rgba(255,107,107,.04);border-color:rgba(255,107,107,.2)}
+.psbox.gold{background:rgba(232,184,109,.04);border-color:rgba(232,184,109,.2)}
+.psval{font-size:24px;font-weight:900}
+.pslbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+/* BADGE */
+.rbadge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.rb-green{background:rgba(76,222,138,.12);color:var(--green)}
+.rb-red{background:rgba(255,107,107,.12);color:var(--red)}
+.rb-gold{background:rgba(232,184,109,.12);color:var(--gold)}
+.rb-blue{background:rgba(96,165,250,.12);color:#60a5fa}
+/* EXPORT */
+.export-row{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+/* PERIOD BTNS */
+.period-btns{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.pbtn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--bg2);color:var(--muted);cursor:pointer;transition:all .2s}
+.pbtn:hover{color:var(--text)}
+.pbtn.active{background:rgba(232,184,109,.12);border-color:rgba(232,184,109,.4);color:var(--gold)}
+@media(max-width:1024px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.chart-2col,.chart-3col{grid-template-columns:1fr}.profit-summary{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.kpi-grid{grid-template-columns:1fr 1fr}.profit-summary{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="hero-bg"><div class="orb orb1"></div><div class="orb orb2"></div><div class="grid-bg"></div></div>
+<nav class="navbar scrolled" id="navbar" style="position:fixed;top:0;left:0;right:0;z-index:100">
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">Virtual<span>Fit</span> <span style="font-size:10px;color:var(--gold);margin-left:6px">REPORTS</span></a>
+    <div style="display:flex;gap:10px">
+      <a href="admin.html" class="btn btn-outline btn-sm"><i class="fas fa-cog"></i> Admin</a>
+      <a href="analytics.html" class="btn btn-outline btn-sm"><i class="fas fa-chart-pie"></i> Analytics</a>
+      <a href="index.html" class="btn btn-outline btn-sm"><i class="fas fa-home"></i> Site</a>
+    </div>
+  </div>
+</nav>
+
+<div class="rep-page">
+<div class="container">
+
+  <div class="rep-header">
+    <div>
+      <h1>📊 Business Reports</h1>
+      <p style="color:var(--muted);font-size:13px">Complete sales, profit & performance insights</p>
+    </div>
+    <div class="date-row">
+      <label style="font-size:12px;color:var(--muted)">From:</label>
+      <input type="date" class="date-inp" id="dateFrom">
+      <label style="font-size:12px;color:var(--muted)">To:</label>
+      <input type="date" class="date-inp" id="dateTo">
+      <button class="btn btn-gold btn-sm" onclick="loadAll()"><i class="fas fa-sync"></i> Refresh</button>
+    </div>
+  </div>
+
+  <!-- Period quick select -->
+  <div class="period-btns">
+    <button class="pbtn active" onclick="setPeriod('today',this)">Today</button>
+    <button class="pbtn" onclick="setPeriod('week',this)">This Week</button>
+    <button class="pbtn" onclick="setPeriod('month',this)">This Month</button>
+    <button class="pbtn" onclick="setPeriod('quarter',this)">This Quarter</button>
+    <button class="pbtn" onclick="setPeriod('year',this)">This Year</button>
+    <button class="pbtn" onclick="setPeriod('all',this)">All Time</button>
+  </div>
+
+  <!-- Export -->
+  <div class="export-row">
+    <button class="btn btn-outline btn-sm" onclick="exportCSV()"><i class="fas fa-file-csv"></i> Export CSV</button>
+    <button class="btn btn-outline btn-sm" onclick="exportPDF()"><i class="fas fa-file-pdf"></i> Export PDF</button>
+    <button class="btn btn-outline btn-sm" onclick="printReport()"><i class="fas fa-print"></i> Print</button>
+  </div>
+
+  <!-- REPORT TABS -->
+  <div class="rep-tabs">
+    <div class="rtab active" onclick="showRep('overview',this)"><i class="fas fa-chart-pie"></i> Overview</div>
+    <div class="rtab" onclick="showRep('sales',this)"><i class="fas fa-chart-line"></i> Sales Report</div>
+    <div class="rtab" onclick="showRep('profit',this)"><i class="fas fa-coins"></i> Profit & Loss</div>
+    <div class="rtab" onclick="showRep('products',this)"><i class="fas fa-tshirt"></i> Product Report</div>
+    <div class="rtab" onclick="showRep('customers',this)"><i class="fas fa-users"></i> Customer Report</div>
+    <div class="rtab" onclick="showRep('inventory',this)"><i class="fas fa-boxes"></i> Inventory</div>
+  </div>
+
+  <!-- ═══ OVERVIEW ═══ -->
+  <div class="rsec active" id="rep-overview">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-val" id="kTotalRev">—</div><div class="kpi-lbl">Total Revenue</div><div class="kpi-change up" id="kRevChange">Loading...</div></div>
+      <div class="kpi"><div class="kpi-val" id="kTotalOrders">—</div><div class="kpi-lbl">Total Orders</div><div class="kpi-change up" id="kOrdChange">Loading...</div></div>
+      <div class="kpi"><div class="kpi-val" id="kAvgOrder">—</div><div class="kpi-lbl">Avg Order Value</div><div class="kpi-change" id="kAvgChange" style="color:var(--muted)">Per order</div></div>
+      <div class="kpi"><div class="kpi-val" id="kTotalCustomers">—</div><div class="kpi-lbl">Total Customers</div><div class="kpi-change" id="kCustChange" style="color:var(--muted)">Registered</div></div>
+    </div>
+
+    <div class="chart-2col">
+      <div class="chart-box">
+        <h3><i class="fas fa-chart-line"></i> Revenue Trend</h3>
+        <canvas id="revTrendChart" height="220"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3><i class="fas fa-chart-bar"></i> Orders by Status</h3>
+        <canvas id="statusChart" height="220"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-3col">
+      <div class="chart-box">
+        <h3><i class="fas fa-tshirt"></i> Top Categories</h3>
+        <canvas id="catChart" height="200"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3><i class="fas fa-users"></i> Customer Gender</h3>
+        <canvas id="genderRevChart" height="200"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3><i class="fas fa-clock"></i> Peak Hours</h3>
+        <canvas id="hourChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SALES REPORT ═══ -->
+  <div class="rsec" id="rep-sales">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-val" id="sTotalSales">—</div><div class="kpi-lbl">Total Sales</div></div>
+      <div class="kpi"><div class="kpi-val" id="sTotalItems">—</div><div class="kpi-lbl">Items Sold</div></div>
+      <div class="kpi"><div class="kpi-val" id="sAvgItems">—</div><div class="kpi-lbl">Avg Items/Order</div></div>
+      <div class="kpi"><div class="kpi-val" id="sReturnRate">0%</div><div class="kpi-lbl">Cancellation Rate</div></div>
+    </div>
+
+    <div class="chart-2col">
+      <div class="chart-box">
+        <h3><i class="fas fa-chart-bar"></i> Daily Sales</h3>
+        <canvas id="dailySalesChart" height="220"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3><i class="fas fa-layer-group"></i> Sales by Category</h3>
+        <canvas id="catSalesChart" height="220"></canvas>
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-hd">
+        <h3><i class="fas fa-list"></i> All Orders in Period</h3>
+        <span id="salesOrdCount" style="font-size:13px;color:var(--muted)"></span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="rep-tbl">
+          <thead><tr><th>Order #</th><th>Customer</th><th>Amount</th><th>Shipping</th><th>Discount</th><th>Net</th><th>Status</th><th>Payment</th><th>Date</th></tr></thead>
+          <tbody id="salesOrdTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PROFIT & LOSS ═══ -->
+  <div class="rsec" id="rep-profit">
+    <div class="profit-summary">
+      <div class="psbox green"><div class="psval" style="color:var(--green)" id="pRevenue">—</div><div class="pslbl">💰 Total Revenue</div></div>
+      <div class="psbox red"><div class="psval" style="color:var(--red)" id="pCosts">—</div><div class="pslbl">📦 Shipping Costs</div></div>
+      <div class="psbox gold"><div class="psval" style="color:var(--gold)" id="pProfit">—</div><div class="pslbl">🏆 Gross Profit</div></div>
+    </div>
+
+    <div class="chart-2col">
+      <div class="chart-box">
+        <h3><i class="fas fa-chart-area"></i> Revenue vs Costs</h3>
+        <canvas id="profitChart" height="240"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3><i class="fas fa-percentage"></i> Profit Margin by Category</h3>
+        <canvas id="marginChart" height="240"></canvas>
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-hd"><h3><i class="fas fa-receipt"></i> P&L Breakdown</h3></div>
+      <div style="overflow-x:auto">
+        <table class="rep-tbl">
+          <thead><tr><th>Category</th><th>Revenue</th><th>Shipping</th><th>Discounts</th><th>Gross Profit</th><th>Margin %</th></tr></thead>
+          <tbody id="plTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PRODUCT REPORT ═══ -->
+  <div class="rsec" id="rep-products">
+    <div class="chart-2col">
+      <div class="chart-box">
+        <h3><i class="fas fa-trophy"></i> Top Selling Products</h3>
+        <canvas id="topProdChart" height="280"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3><i class="fas fa-venus-mars"></i> Sales by Gender</h3>
+        <canvas id="genderSalesChart" height="280"></canvas>
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-hd"><h3><i class="fas fa-tshirt"></i> Product Performance</h3></div>
+      <div style="overflow-x:auto">
+        <table class="rep-tbl">
+          <thead><tr><th>Product</th><th>Category</th><th>Gender</th><th>Units Sold</th><th>Revenue</th><th>Avg Price</th><th>Performance</th></tr></thead>
+          <tbody id="prodPerfTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CUSTOMER REPORT ═══ -->
+  <div class="rsec" id="rep-customers">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-val" id="cTotal">—</div><div class="kpi-lbl">Total Customers</div></div>
+      <div class="kpi"><div class="kpi-val" id="cNew">—</div><div class="kpi-lbl">New This Period</div></div>
+      <div class="kpi"><div class="kpi-val" id="cRepeat">—</div><div class="kpi-lbl">Repeat Buyers</div></div>
+      <div class="kpi"><div class="kpi-val" id="cLTV">—</div><div class="kpi-lbl">Avg Lifetime Value</div></div>
+    </div>
+
+    <div class="chart-2col">
+      <div class="chart-box">
+        <h3><i class="fas fa-user-plus"></i> New Customers Over Time</h3>
+        <canvas id="newCustChart" height="220"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3><i class="fas fa-map-marker-alt"></i> Customers by City</h3>
+        <canvas id="cityChart" height="220"></canvas>
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-hd"><h3><i class="fas fa-star"></i> Top Customers</h3></div>
+      <div style="overflow-x:auto">
+        <table class="rep-tbl">
+          <thead><tr><th>Customer</th><th>Email</th><th>Orders</th><th>Total Spent</th><th>Avg Order</th><th>Last Order</th><th>Value</th></tr></thead>
+          <tbody id="topCustTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ INVENTORY ═══ -->
+  <div class="rsec" id="rep-inventory">
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-val" id="invTotal">—</div><div class="kpi-lbl">Total Products</div></div>
+      <div class="kpi"><div class="kpi-val" id="invInStock">—</div><div class="kpi-lbl">In Stock</div></div>
+      <div class="kpi"><div class="kpi-val" id="invLow">—</div><div class="kpi-lbl" style="color:var(--gold)">Low Stock (≤3)</div></div>
+      <div class="kpi"><div class="kpi-val" id="invOut">—</div><div class="kpi-lbl" style="color:var(--red)">Out of Stock</div></div>
+    </div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-hd">
+        <h3><i class="fas fa-boxes"></i> Stock Status by Product & Size</h3>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm btn-outline" onclick="filterInv('all')">All</button>
+          <button class="btn btn-sm btn-outline" onclick="filterInv('low')" style="color:var(--gold)">⚠ Low</button>
+          <button class="btn btn-sm btn-outline" onclick="filterInv('out')" style="color:var(--red)">❌ Out</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="rep-tbl">
+          <thead><tr><th>Product</th><th>Gender</th><th>Category</th><th>Size</th><th>In Stock</th><th>Sold</th><th>Status</th></tr></thead>
+          <tbody id="invTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script src="js/data.js?v=20260513"></script>
+<script>
+// ── SUPABASE ──────────────────────────────────────────────
+const SB_URL = 'https://fcretwoovhfzeqziucca.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjcmV0d29vdmhmemVxeml1Y2NhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNTcxMTMsImV4cCI6MjA5MzgzMzExM30.anZCI0FnbFHZ_hU_ATqN_Fa4XUMfLk12xSWHDkdZbqA';
+const SB_H = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+// Admin check
+if(!sessionStorage.getItem('vf_admin')) { window.location.href = 'admin-login.html'; }
+
+async function sbGet(table, params) {
+  let url = SB_URL + '/rest/v1/' + table;
+  if(params) url += '?' + new URLSearchParams(params).toString();
+  const r = await fetch(url, { headers: SB_H });
+  if(r.ok) return await r.json();
+  return [];
+}
+
+// ── GLOBALS ───────────────────────────────────────────────
+let allOrders = [], allUsers = [], allProducts = [], allItems = [], allSizeStock = [];
+let activeTab = 'overview';
+
+// ── PERIOD SELECTION ─────────────────────────────────────
+function setPeriod(p, el) {
+  document.querySelectorAll('.pbtn').forEach(b => b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const now = new Date();
+  let from = new Date();
+  if(p === 'today')   from = new Date(now.toDateString());
+  else if(p === 'week')    { from = new Date(now); from.setDate(from.getDate() - 7); }
+  else if(p === 'month')   { from = new Date(now.getFullYear(), now.getMonth(), 1); }
+  else if(p === 'quarter') { const q = Math.floor(now.getMonth()/3); from = new Date(now.getFullYear(), q*3, 1); }
+  else if(p === 'year')    { from = new Date(now.getFullYear(), 0, 1); }
+  else if(p === 'all')     { from = new Date('2020-01-01'); }
+
+  document.getElementById('dateFrom').value = from.toISOString().split('T')[0];
+  document.getElementById('dateTo').value   = now.toISOString().split('T')[0];
+  loadAll();
+}
+
+function getDateRange() {
+  return {
+    from: document.getElementById('dateFrom').value || '2020-01-01',
+    to:   document.getElementById('dateTo').value   || new Date().toISOString().split('T')[0]
+  };
+}
+
+// ── LOAD ALL DATA ─────────────────────────────────────────
+async function loadAll() {
+  const { from, to } = getDateRange();
+  const toEnd = to + 'T23:59:59';
+
+  [allOrders, allUsers, allProducts, allItems, allSizeStock] = await Promise.all([
+    sbGet('orders',       { select: '*', created_at: `gte.${from}`, order: 'created_at.desc' }),
+    sbGet('users',        { select: 'id,name,email,gender,city,created_at', role: 'eq.customer', created_at: `gte.${from}` }),
+    sbGet('products',     { select: 'id,name,gender,cat,price,old_price,badge', is_active: 'eq.true' }),
+    sbGet('order_items',  { select: '*' }),
+    sbGet('product_sizes',{ select: 'product_id,size,stock,sold' })
+  ]);
+
+  // Also load all users (not filtered) for LTV
+  const allUsersTotal = await sbGet('users', { select: 'id,name,email,gender,city,created_at', role: 'eq.customer' });
+
+  renderTab(activeTab, allUsersTotal);
+}
+
+function renderTab(tab, allUsersTotal) {
+  if(tab === 'overview')   renderOverview();
+  if(tab === 'sales')      renderSales();
+  if(tab === 'profit')     renderProfit();
+  if(tab === 'products')   renderProducts();
+  if(tab === 'customers')  renderCustomers(allUsersTotal || allUsers);
+  if(tab === 'inventory')  renderInventory('all');
+}
+
+function showRep(name, el) {
+  activeTab = name;
+  document.querySelectorAll('.rsec').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.rtab').forEach(t => t.classList.remove('active'));
+  document.getElementById('rep-' + name).classList.add('active');
+  if(el) el.classList.add('active');
+  renderTab(name);
+}
+
+// ── HELPERS ───────────────────────────────────────────────
+function fmt(n) { return 'Rs. ' + (n||0).toLocaleString(); }
+function fmtN(n){ return (n||0).toLocaleString(); }
+function pct(a,b){ return b ? Math.round(a/b*100) + '%' : '0%'; }
+function chartColors() { return ['#e8b86d','#7c6af7','#4cde8a','#f784b0','#60a5fa','#fb923c','#a78bfa','#34d399']; }
+function destroyChart(id) {
+  const existing = Chart.getChart(id);
+  if(existing) existing.destroy();
+}
+
+// ── OVERVIEW ──────────────────────────────────────────────
+function renderOverview() {
+  const orders = allOrders;
+  const totalRev  = orders.reduce((s,o) => s + (o.total_amount||0), 0);
+  const totalOrd  = orders.length;
+  const avgOrder  = totalOrd ? Math.round(totalRev/totalOrd) : 0;
+
+  document.getElementById('kTotalRev').textContent      = fmt(totalRev);
+  document.getElementById('kTotalOrders').textContent   = fmtN(totalOrd);
+  document.getElementById('kAvgOrder').textContent      = fmt(avgOrder);
+  document.getElementById('kTotalCustomers').textContent= fmtN(allUsers.length);
+  document.getElementById('kRevChange').textContent     = fmtN(orders.filter(o=>o.order_status==='delivered').length) + ' delivered';
+  document.getElementById('kOrdChange').textContent     = fmtN(orders.filter(o=>o.order_status==='pending').length) + ' pending';
+
+  // Revenue trend (last 14 days)
+  const days=[], revs=[];
+  for(let i=13;i>=0;i--) {
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const ds=d.toISOString().split('T')[0];
+    days.push(d.toLocaleDateString('en',{month:'short',day:'numeric'}));
+    revs.push(orders.filter(o=>o.created_at?.startsWith(ds)).reduce((s,o)=>s+(o.total_amount||0),0));
+  }
+  destroyChart('revTrendChart');
+  new Chart(document.getElementById('revTrendChart'), {
+    type:'line',
+    data:{ labels:days, datasets:[{label:'Revenue',data:revs,borderColor:'#e8b86d',backgroundColor:'rgba(232,184,109,.06)',borderWidth:2,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#e8b86d'}] },
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#555',font:{size:10}}}, y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#555',callback:v=>'Rs.'+v.toLocaleString()}} } }
+  });
+
+  // Order status chart
+  const statuses = ['pending','confirmed','processing','shipped','delivered','cancelled'];
+  const stCounts = statuses.map(s => orders.filter(o=>o.order_status===s).length);
+  destroyChart('statusChart');
+  new Chart(document.getElementById('statusChart'), {
+    type:'doughnut',
+    data:{ labels:statuses, datasets:[{data:stCounts, backgroundColor:chartColors(), borderWidth:0, hoverOffset:6}] },
+    options:{ responsive:true, plugins:{legend:{position:'right',labels:{color:'#888',font:{size:11}}}} }
+  });
+
+  // Category from order items
+  const catMap = {};
+  allItems.forEach(item => {
+    const prod = allProducts.find(p=>p.id===item.product_id);
+    const cat = prod?.cat || 'other';
+    catMap[cat] = (catMap[cat]||0) + (item.subtotal||0);
+  });
+  const catLabels = Object.keys(catMap).slice(0,6);
+  destroyChart('catChart');
+  new Chart(document.getElementById('catChart'), {
+    type:'bar',
+    data:{ labels:catLabels, datasets:[{label:'Revenue',data:catLabels.map(k=>catMap[k]),backgroundColor:'rgba(232,184,109,.4)',borderColor:'#e8b86d',borderWidth:2,borderRadius:6}] },
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'#555',font:{size:10}}}, y:{ticks:{color:'#555',callback:v=>'Rs.'+v.toLocaleString()}} } }
+  });
+
+  // Gender revenue
+  const gMap = {men:0,women:0,boys:0,girls:0,'mid-age':0};
+  allOrders.forEach(o => {
+    const user = allUsers.find(u=>u.id===o.user_id);
+    if(user?.gender) gMap[user.gender] = (gMap[user.gender]||0) + (o.total_amount||0);
+  });
+  const gLabels = Object.keys(gMap).filter(k=>gMap[k]>0);
+  destroyChart('genderRevChart');
+  new Chart(document.getElementById('genderRevChart'), {
+    type:'pie',
+    data:{ labels:gLabels, datasets:[{data:gLabels.map(k=>gMap[k]), backgroundColor:chartColors(), borderWidth:0}] },
+    options:{ responsive:true, plugins:{legend:{position:'bottom',labels:{color:'#888',font:{size:11}}}} }
+  });
+
+  // Peak hours
+  const hours = Array(24).fill(0);
+  allOrders.forEach(o => { if(o.created_at) { const h=new Date(o.created_at).getHours(); hours[h]++; } });
+  destroyChart('hourChart');
+  new Chart(document.getElementById('hourChart'), {
+    type:'bar',
+    data:{ labels:hours.map((_,i)=>i+'h'), datasets:[{data:hours,backgroundColor:hours.map(v=>v===Math.max(...hours)?'#e8b86d':'rgba(232,184,109,.2)'),borderRadius:4}] },
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'#555',font:{size:9}}}, y:{ticks:{color:'#555',stepSize:1}} } }
+  });
+}
+
+// ── SALES ─────────────────────────────────────────────────
+function renderSales() {
+  const orders = allOrders;
+  const totalSales = orders.reduce((s,o)=>s+(o.total_amount||0),0);
+  const totalItems = allItems.reduce((s,i)=>s+(i.quantity||1),0);
+  const avgItems   = orders.length ? (totalItems/orders.length).toFixed(1) : 0;
+  const cancelled  = orders.filter(o=>o.order_status==='cancelled').length;
+  const cancelRate = orders.length ? Math.round(cancelled/orders.length*100) : 0;
+
+  document.getElementById('sTotalSales').textContent = fmt(totalSales);
+  document.getElementById('sTotalItems').textContent = fmtN(totalItems);
+  document.getElementById('sAvgItems').textContent   = avgItems;
+  document.getElementById('sReturnRate').textContent = cancelRate + '%';
+  document.getElementById('salesOrdCount').textContent = '(' + orders.length + ' orders)';
+
+  // Daily sales
+  const days=[],amounts=[];
+  for(let i=13;i>=0;i--) {
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const ds=d.toISOString().split('T')[0];
+    days.push(d.toLocaleDateString('en',{month:'short',day:'numeric'}));
+    amounts.push(orders.filter(o=>o.created_at?.startsWith(ds)).reduce((s,o)=>s+(o.total_amount||0),0));
+  }
+  destroyChart('dailySalesChart');
+  new Chart(document.getElementById('dailySalesChart'), {
+    type:'bar',
+    data:{ labels:days, datasets:[{data:amounts,backgroundColor:'rgba(232,184,109,.3)',borderColor:'#e8b86d',borderWidth:2,borderRadius:6}] },
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'#555',font:{size:9}}}, y:{ticks:{color:'#555',callback:v=>'Rs.'+v.toLocaleString()}} } }
+  });
+
+  // Category sales
+  const catMap={};
+  allItems.forEach(i=>{
+    const prod=allProducts.find(p=>p.id===i.product_id);
+    const cat=prod?.cat||'other';
+    catMap[cat]=(catMap[cat]||0)+(i.subtotal||0);
+  });
+  const cl=Object.keys(catMap);
+  destroyChart('catSalesChart');
+  new Chart(document.getElementById('catSalesChart'), {
+    type:'doughnut',
+    data:{labels:cl,datasets:[{data:cl.map(k=>catMap[k]),backgroundColor:chartColors(),borderWidth:0,hoverOffset:8}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#888',font:{size:11}}}}}
+  });
+
+  // Orders table
+  const statusMap = {pending:'rb-gold',confirmed:'rb-blue',delivered:'rb-green',cancelled:'rb-red',shipped:'rb-blue'};
+  document.getElementById('salesOrdTable').innerHTML = orders.slice(0,50).map(o => `
+    <tr>
+      <td style="font-family:monospace;font-size:12px;color:var(--gold)">${o.order_number||'—'}</td>
+      <td><div style="font-weight:600">${o.customer_name||'—'}</div></td>
+      <td>${fmt(o.total_amount)}</td>
+      <td style="color:var(--muted)">${fmt(o.shipping_fee||350)}</td>
+      <td style="color:var(--green)">-${fmt(o.discount||0)}</td>
+      <td style="font-weight:700;color:var(--gold)">${fmt((o.total_amount||0)-(o.shipping_fee||350)+(o.discount||0))}</td>
+      <td><span class="rbadge ${statusMap[o.order_status]||'rb-gold'}">${o.order_status||'pending'}</span></td>
+      <td>${o.payment_method||'cod'}</td>
+      <td style="font-size:11px;color:var(--muted)">${o.created_at?new Date(o.created_at).toLocaleDateString():'—'}</td>
+    </tr>`).join('') || '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--muted)">No orders in this period</td></tr>';
+}
+
+// ── PROFIT & LOSS ─────────────────────────────────────────
+function renderProfit() {
+  const orders = allOrders;
+  const revenue  = orders.reduce((s,o)=>s+(o.total_amount||0),0);
+  const shipping = orders.reduce((s,o)=>s+(o.shipping_fee||0),0);
+  const discount = orders.reduce((s,o)=>s+(o.discount||0),0);
+  const profit   = revenue - shipping - discount;
+
+  document.getElementById('pRevenue').textContent = fmt(revenue);
+  document.getElementById('pCosts').textContent   = fmt(shipping + discount);
+  document.getElementById('pProfit').textContent  = fmt(profit);
+
+  // P&L Chart
+  const days=[], revArr=[], costArr=[];
+  for(let i=13;i>=0;i--) {
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const ds=d.toISOString().split('T')[0];
+    const dayOrds=orders.filter(o=>o.created_at?.startsWith(ds));
+    days.push(d.toLocaleDateString('en',{month:'short',day:'numeric'}));
+    revArr.push(dayOrds.reduce((s,o)=>s+(o.total_amount||0),0));
+    costArr.push(dayOrds.reduce((s,o)=>s+(o.shipping_fee||0)+(o.discount||0),0));
+  }
+  destroyChart('profitChart');
+  new Chart(document.getElementById('profitChart'), {
+    type:'line',
+    data:{labels:days,datasets:[
+      {label:'Revenue',data:revArr,borderColor:'#e8b86d',backgroundColor:'rgba(232,184,109,.08)',borderWidth:2,fill:true,tension:0.4},
+      {label:'Costs',data:costArr,borderColor:'#ff6b6b',backgroundColor:'rgba(255,107,107,.08)',borderWidth:2,fill:true,tension:0.4}
+    ]},
+    options:{responsive:true,plugins:{legend:{labels:{color:'#888'}}},scales:{x:{ticks:{color:'#555',font:{size:9}}},y:{ticks:{color:'#555',callback:v=>'Rs.'+v.toLocaleString()}}}}
+  });
+
+  // Margin by category
+  const catRev={}, catCost={};
+  allItems.forEach(i=>{
+    const prod=allProducts.find(p=>p.id===i.product_id);
+    const cat=prod?.cat||'other';
+    catRev[cat]=(catRev[cat]||0)+(i.subtotal||0);
+    catCost[cat]=(catCost[cat]||0)+Math.round((i.subtotal||0)*0.15);
+  });
+  const catKeys=Object.keys(catRev);
+  const margins=catKeys.map(k=>catRev[k]?Math.round((catRev[k]-catCost[k])/catRev[k]*100):0);
+  destroyChart('marginChart');
+  new Chart(document.getElementById('marginChart'), {
+    type:'bar',
+    data:{labels:catKeys,datasets:[{label:'Margin %',data:margins,backgroundColor:margins.map(m=>m>=50?'rgba(76,222,138,.4)':m>=30?'rgba(232,184,109,.4)':'rgba(255,107,107,.4)'),borderColor:margins.map(m=>m>=50?'#4cde8a':m>=30?'#e8b86d':'#ff6b6b'),borderWidth:2,borderRadius:6}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#555',font:{size:10}}},y:{ticks:{color:'#555',callback:v=>v+'%'}}}}
+  });
+
+  // P&L Table by category
+  document.getElementById('plTable').innerHTML = catKeys.map(cat => {
+    const rev=catRev[cat]||0, cost=catCost[cat]||0, gp=rev-cost;
+    const margin=rev?Math.round(gp/rev*100):0;
+    return `<tr>
+      <td style="font-weight:600;text-transform:capitalize">${cat}</td>
+      <td style="color:var(--green)">${fmt(rev)}</td>
+      <td style="color:var(--red)">-${fmt(cost)}</td>
+      <td style="color:var(--gold)">-${fmt(orders.reduce((s,o)=>s+(o.discount||0),0))}</td>
+      <td style="font-weight:700;color:var(--gold)">${fmt(gp)}</td>
+      <td><span class="rbadge ${margin>=50?'rb-green':margin>=30?'rb-gold':'rb-red'}">${margin}%</span></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">No data</td></tr>';
+}
+
+// ── PRODUCT PERFORMANCE ───────────────────────────────────
+function renderProducts() {
+  const prodSales = {};
+  allItems.forEach(i => {
+    const id = i.product_id;
+    if(!prodSales[id]) prodSales[id] = { units:0, revenue:0 };
+    prodSales[id].units   += (i.quantity||1);
+    prodSales[id].revenue += (i.subtotal||0);
+  });
+
+  const sorted = allProducts.map(p => ({
+    ...p,
+    units:   prodSales[p.id]?.units   || 0,
+    revenue: prodSales[p.id]?.revenue || 0
+  })).sort((a,b) => b.revenue - a.revenue);
+
+  // Top products chart
+  const top10 = sorted.slice(0,8);
+  destroyChart('topProdChart');
+  new Chart(document.getElementById('topProdChart'), {
+    type:'bar',
+    data:{labels:top10.map(p=>p.name.slice(0,18)+'...'),datasets:[{label:'Revenue',data:top10.map(p=>p.revenue),backgroundColor:'rgba(232,184,109,.3)',borderColor:'#e8b86d',borderWidth:2,borderRadius:6}]},
+    options:{responsive:true,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#555',callback:v=>'Rs.'+v.toLocaleString()}},y:{ticks:{color:'#666',font:{size:10}}}}}
+  });
+
+  // Gender sales
+  const gSales={men:0,women:0,boys:0,girls:0,'mid-age':0};
+  sorted.forEach(p=>{ if(gSales[p.gender]!==undefined) gSales[p.gender]+=(p.revenue||0); });
+  const gl=Object.keys(gSales).filter(k=>gSales[k]>0);
+  destroyChart('genderSalesChart');
+  new Chart(document.getElementById('genderSalesChart'), {
+    type:'doughnut',
+    data:{labels:gl,datasets:[{data:gl.map(k=>gSales[k]),backgroundColor:chartColors(),borderWidth:0,hoverOffset:8}]},
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#888',font:{size:11}}}}}
+  });
+
+  // Table
+  document.getElementById('prodPerfTable').innerHTML = sorted.slice(0,30).map((p,i) => {
+    const perf = p.revenue > 10000 ? 'rb-green' : p.revenue > 3000 ? 'rb-gold' : 'rb-red';
+    const perfLabel = p.revenue > 10000 ? 'High' : p.revenue > 3000 ? 'Medium' : 'Low';
+    return `<tr>
+      <td><div style="font-weight:600;font-size:13px">${p.name}</div></td>
+      <td style="text-transform:capitalize">${p.cat}</td>
+      <td style="text-transform:capitalize">${p.gender}</td>
+      <td style="font-weight:700">${fmtN(p.units)}</td>
+      <td style="color:var(--gold);font-weight:700">${fmt(p.revenue)}</td>
+      <td>${p.units ? fmt(Math.round(p.revenue/p.units)) : '—'}</td>
+      <td><span class="rbadge ${perf}">${perfLabel}</span></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">No sales data yet</td></tr>';
+}
+
+// ── CUSTOMERS ─────────────────────────────────────────────
+function renderCustomers(allUsersTotal) {
+  const users = allUsersTotal || allUsers;
+  const custOrders = {};
+  allOrders.forEach(o => {
+    if(o.user_id) {
+      if(!custOrders[o.user_id]) custOrders[o.user_id] = { count:0, total:0, last:null };
+      custOrders[o.user_id].count++;
+      custOrders[o.user_id].total += (o.total_amount||0);
+      custOrders[o.user_id].last = o.created_at;
+    }
+  });
+
+  const repeat = users.filter(u => (custOrders[u.id]?.count||0) > 1).length;
+  const totalSpent = Object.values(custOrders).reduce((s,c)=>s+c.total,0);
+  const ltv = users.length ? Math.round(totalSpent/users.length) : 0;
+
+  document.getElementById('cTotal').textContent  = fmtN(users.length);
+  document.getElementById('cNew').textContent    = fmtN(allUsers.length);
+  document.getElementById('cRepeat').textContent = fmtN(repeat);
+  document.getElementById('cLTV').textContent    = fmt(ltv);
+
+  // New customers chart
+  const days=[],newCusts=[];
+  for(let i=13;i>=0;i--) {
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const ds=d.toISOString().split('T')[0];
+    days.push(d.toLocaleDateString('en',{month:'short',day:'numeric'}));
+    newCusts.push(allUsers.filter(u=>u.created_at?.startsWith(ds)).length);
+  }
+  destroyChart('newCustChart');
+  new Chart(document.getElementById('newCustChart'), {
+    type:'bar',
+    data:{labels:days,datasets:[{data:newCusts,backgroundColor:'rgba(124,106,247,.3)',borderColor:'#7c6af7',borderWidth:2,borderRadius:6}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#555',font:{size:9}}},y:{ticks:{color:'#555',stepSize:1}}}}
+  });
+
+  // City distribution
+  const cityMap={};
+  users.forEach(u=>{ if(u.city) cityMap[u.city]=(cityMap[u.city]||0)+1; });
+  const cityKeys=Object.keys(cityMap).sort((a,b)=>cityMap[b]-cityMap[a]).slice(0,6);
+  destroyChart('cityChart');
+  if(cityKeys.length) {
+    new Chart(document.getElementById('cityChart'), {
+      type:'doughnut',
+      data:{labels:cityKeys,datasets:[{data:cityKeys.map(k=>cityMap[k]),backgroundColor:chartColors(),borderWidth:0}]},
+      options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#888',font:{size:11}}}}}
+    });
+  }
+
+  // Top customers table
+  const topCusts = users.map(u => ({
+    ...u,
+    orders: custOrders[u.id]?.count || 0,
+    total:  custOrders[u.id]?.total || 0,
+    last:   custOrders[u.id]?.last  || null
+  })).sort((a,b) => b.total - a.total).slice(0,20);
+
+  document.getElementById('topCustTable').innerHTML = topCusts.map(u => {
+    const val = u.total > 20000 ? 'rb-green' : u.total > 5000 ? 'rb-gold' : 'rb-red';
+    const valLabel = u.total > 20000 ? '⭐ VIP' : u.total > 5000 ? 'Regular' : 'New';
+    return `<tr>
+      <td style="font-weight:600">${u.name||'—'}</td>
+      <td style="font-size:12px;color:var(--muted)">${u.email||'—'}</td>
+      <td style="font-weight:700">${fmtN(u.orders)}</td>
+      <td style="color:var(--gold);font-weight:700">${fmt(u.total)}</td>
+      <td>${u.orders ? fmt(Math.round(u.total/u.orders)) : '—'}</td>
+      <td style="font-size:11px;color:var(--muted)">${u.last?new Date(u.last).toLocaleDateString():'Never'}</td>
+      <td><span class="rbadge ${val}">${valLabel}</span></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">No customers yet</td></tr>';
+}
+
+// ── INVENTORY ─────────────────────────────────────────────
+let invData = [];
+function renderInventory(filter) {
+  invData = [];
+  allProducts.forEach(p => {
+    const sizes = allSizeStock.filter(s => s.product_id === p.id);
+    sizes.forEach(s => {
+      invData.push({ product: p.name, gender: p.gender, cat: p.cat, size: s.size, stock: s.stock, sold: s.sold||0 });
+    });
+  });
+
+  const total   = allProducts.length;
+  const inStock = invData.filter(i=>i.stock>0).length;
+  const low     = invData.filter(i=>i.stock>0&&i.stock<=3).length;
+  const out     = invData.filter(i=>i.stock===0).length;
+
+  document.getElementById('invTotal').textContent   = fmtN(total);
+  document.getElementById('invInStock').textContent = fmtN(inStock);
+  document.getElementById('invLow').textContent     = fmtN(low);
+  document.getElementById('invOut').textContent     = fmtN(out);
+
+  filterInv(filter);
+}
+
+function filterInv(f) {
+  let list = invData;
+  if(f === 'low') list = invData.filter(i=>i.stock>0&&i.stock<=3);
+  if(f === 'out') list = invData.filter(i=>i.stock===0);
+
+  document.getElementById('invTable').innerHTML = list.length
+    ? list.map(i => {
+        const isOut=i.stock===0, isLow=i.stock<=3&&i.stock>0;
+        return `<tr>
+          <td style="font-weight:600">${i.product}</td>
+          <td style="text-transform:capitalize">${i.gender}</td>
+          <td style="text-transform:capitalize">${i.cat}</td>
+          <td style="font-weight:700">${i.size}</td>
+          <td style="font-weight:800;color:${isOut?'var(--red)':isLow?'var(--gold)':'var(--green)'}">${fmtN(i.stock)}</td>
+          <td>${fmtN(i.sold)}</td>
+          <td><span class="rbadge ${isOut?'rb-red':isLow?'rb-gold':'rb-green'}">${isOut?'OUT OF STOCK':isLow?'LOW STOCK':'IN STOCK'}</span></td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">No inventory data — add sizes in admin panel</td></tr>';
+}
+
+// ── EXPORT ────────────────────────────────────────────────
+function exportCSV() {
+  const orders = allOrders;
+  const rows = [['Order #','Customer','Email','Amount','Shipping','Discount','Status','Payment','Date']];
+  orders.forEach(o => rows.push([
+    o.order_number, o.customer_name, o.customer_email,
+    o.total_amount, o.shipping_fee||350, o.discount||0,
+    o.order_status, o.payment_method,
+    o.created_at ? new Date(o.created_at).toLocaleDateString() : ''
+  ]));
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'virtualfit-report-' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+  toast('CSV exported!');
+}
+
+function printReport() { window.print(); }
+
+function exportPDF() {
+  toast('Print dialog-ல "Save as PDF" select பண்ணுங்க!','info');
+  setTimeout(() => window.print(), 500);
+}
+
+// ── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  setPeriod('month', document.querySelector('.pbtn:nth-child(3)'));
+  window.addEventListener('scroll', () => document.getElementById('navbar')?.classList.toggle('scrolled', scrollY > 20));
+});
+</script>
+</body>
+</html>

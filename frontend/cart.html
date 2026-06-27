@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Cart — VirtualFit Pro</title>
+<link rel="stylesheet" href="css/main.css?v=20260513">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">Virtual<span>Fit</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li><li><a href="gallery.html">Shop</a></li>
+      <li><a href="tryon.html">Try-On</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="cart.html" class="nav-icon"><i class="fas fa-shopping-bag"></i><span class="badge" id="cartBadge">0</span></a>
+      <a href="login.html" class="nav-icon" id="loginBtn"><i class="fas fa-user"></i></a>
+      <button class="nav-toggle" id="navToggle"><i class="fas fa-bars"></i></button>
+    </div>
+  </div>
+</nav>
+
+<div class="cart-page">
+  <div class="container">
+    <h1 style="font-family:var(--font-head);font-size:40px;font-weight:800;margin-bottom:32px">Shopping Cart</h1>
+
+    <div id="cartEmpty" class="empty-state" style="display:none">
+      <div class="e-icon">🛍️</div>
+      <h2>Your cart is empty</h2>
+      <p>Discover our Men, Women, Boys, Girls & Mid-Age collections</p>
+      <a href="gallery.html" class="btn btn-gold" style="margin-top:16px">Browse Collection</a>
+    </div>
+
+    <div class="cart-layout" id="cartContent">
+      <div>
+        <div class="cart-tbl">
+          <div class="cart-head">
+            <span>Product</span><span>Price</span><span>Qty</span><span>Total</span><span></span>
+          </div>
+          <div id="cartRows"></div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap">
+          <a href="gallery.html" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Continue Shopping</a>
+          <button class="btn btn-ghost" onclick="clearCart()"><i class="fas fa-trash"></i> Clear Cart</button>
+        </div>
+      </div>
+
+      <div class="order-sum">
+        <h3>Order Summary</h3>
+        <div class="sum-row"><span>Subtotal</span><span id="cSub">—</span></div>
+        <div class="sum-row"><span>Shipping</span><span id="cShip">—</span></div>
+        <div class="sum-row"><span style="font-size:11px;color:var(--muted)">Free shipping on orders over Rs. 5,000</span></div>
+        <div class="promo-wrap">
+          <label>Promo Code</label>
+          <div class="promo-row">
+            <input type="text" id="promoIn" placeholder="SAVE10 or FREESHIP">
+            <button class="btn btn-gold btn-sm" onclick="applyPromo()">Apply</button>
+          </div>
+        </div>
+        <div class="sum-row total"><span>Total</span><span id="cTotal">—</span></div>
+        <a href="checkout.html" class="btn btn-gold btn-full" style="margin-top:18px">
+          <i class="fas fa-lock"></i> Secure Checkout
+        </a>
+        <div class="trust-icons">
+          <div class="trust-item"><i class="fas fa-shield-alt" style="color:var(--green)"></i> 256-bit SSL Encryption</div>
+          <div class="trust-item"><i class="fas fa-undo" style="color:var(--gold)"></i> 30-day hassle-free returns</div>
+          <div class="trust-item"><i class="fas fa-truck" style="color:var(--violet)"></i> Fast delivery islandwide</div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:16px;margin-top:16px;opacity:.4;font-size:28px">
+          <i class="fab fa-cc-stripe"></i><i class="fab fa-cc-paypal"></i><i class="fab fa-cc-visa"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer"><div class="container"><div class="footer-bottom"><p>&copy; 2025 VirtualFit Pro.</p></div></div></footer>
+<script src="js/data.js?v=20260513"></script>
+<script>
+let discount = 0;
+
+function renderCart() {
+  const cart    = getCart();
+  const empty   = document.getElementById('cartEmpty');
+  const content = document.getElementById('cartContent');
+  const rows    = document.getElementById('cartRows');
+  if (!cart.length) {
+    if (empty)   empty.style.display   = 'block';
+    if (content) content.style.display = 'none';
+    return;
+  }
+  if (empty)   empty.style.display = 'none';
+  if (content) content.style.display = '';
+  rows.innerHTML = cart.map((item, idx) => `
+    <div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)">
+      <img src="${item.img||''}" alt="${item.name}" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;background:var(--bg2)"
+           onerror="this.style.display='none'">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600">${item.name}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Size: ${item.size} · ${(item.gender||'').charAt(0).toUpperCase()+(item.gender||'').slice(1)}</div>
+        <div style="font-size:14px;font-weight:700;color:var(--gold);margin-top:4px">Rs. ${(item.price*item.qty).toLocaleString()}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <button onclick="changeQty(${idx},-1)" style="width:28px;height:28px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);color:var(--text);cursor:pointer;font-size:16px">−</button>
+        <span style="font-weight:700;min-width:20px;text-align:center">${item.qty}</span>
+        <button onclick="changeQty(${idx},1)"  style="width:28px;height:28px;border-radius:50%;background:var(--bg2);border:1px solid var(--border);color:var(--text);cursor:pointer;font-size:16px">+</button>
+        <button onclick="removeItem(${idx})" style="width:28px;height:28px;border-radius:50%;background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.2);color:var(--red);cursor:pointer;margin-left:4px;font-size:11px"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`).join('');
+  updateTotals();
+}
+
+function changeQty(idx, d) {
+  const cart = getCart(); cart[idx].qty = Math.max(1, cart[idx].qty + d);
+  saveCart(cart); renderCart();
+}
+function removeItem(idx) {
+  const cart = getCart(); cart.splice(idx,1);
+  saveCart(cart); renderCart(); toast('Item removed','err');
+}
+function updateTotals() {
+  const cart = getCart();
+  const sub  = cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const ship = (sub >= 5000 || (discount >= 350 && discount === 350)) ? 0 : 350;
+  const total= sub+ship-discount;
+  const el=id=>document.getElementById(id);
+  if(el('cSub'))   el('cSub').textContent  ='Rs. '+sub.toLocaleString();
+  if(el('cShip'))  el('cShip').textContent =ship===0?'FREE':'Rs. '+ship;
+  if(el('cDisc'))  el('cDisc').textContent =discount?'− Rs. '+discount.toLocaleString():'—';
+  if(el('cTotal')) el('cTotal').textContent='Rs. '+Math.max(0,total).toLocaleString();
+}
+const PROMO_CODES = {
+  'SAVE10':    {type:'percent', value:10,  min:1000},
+  'FREESHIP':  {type:'fixed',   value:350, min:0},
+  'WELCOME20': {type:'percent', value:20,  min:2000},
+  'VF50':      {type:'fixed',   value:500, min:5000},
+};
+
+function applyPromo() {
+  const code = document.getElementById('promoIn')?.value.trim().toUpperCase();
+  const promo = PROMO_CODES[code];
+  if(!promo) { toast('Invalid promo code','err'); return; }
+  
+  const sub = getCart().reduce((s,i)=>s+i.price*i.qty, 0);
+  if(sub < promo.min) {
+    toast('Minimum order Rs. '+promo.min.toLocaleString()+' required','err');
+    return;
+  }
+  
+  discount = promo.type === 'percent' ? Math.round(sub * promo.value / 100) : promo.value;
+  toast(code + ' applied! ' + (promo.type==='percent' ? promo.value+'% off' : 'Rs.'+promo.value+' off') + ' 🎉');
+  updateTotals();
+}
+function clearCart() {
+  if(confirm('Clear all items?')){saveCart([]);renderCart();toast('Cart cleared','err');}
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  updateBadge(); renderCart();
+  window.addEventListener('scroll',()=>document.getElementById('navbar')?.classList.toggle('scrolled',scrollY>20));
+});
+</script>
+</body>
+</html>

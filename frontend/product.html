@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Product — VirtualFit Pro</title>
+<link rel="stylesheet" href="css/main.css?v=20260513">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.detail-page{padding:100px 0 60px;min-height:100vh}
+.detail-layout{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+.detail-img-wrap{position:relative;border-radius:var(--r);overflow:hidden;background:var(--card);border:1px solid var(--border);aspect-ratio:3/4}
+.detail-img-wrap img{width:100%;height:100%;object-fit:cover}
+.detail-img-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:120px}
+.detail-info h1{font-family:var(--font-head);font-size:clamp(24px,3vw,36px);font-weight:900;margin-bottom:8px;line-height:1.2}
+.detail-price{font-size:28px;font-weight:800;color:var(--gold);margin:12px 0}
+.detail-price .old-p{font-size:16px;color:var(--muted);text-decoration:line-through;margin-left:10px;font-weight:400}
+.detail-price .save-pct{font-size:13px;color:var(--red);margin-left:8px;font-weight:700}
+.detail-desc{color:var(--muted);font-size:15px;line-height:1.8;margin-bottom:24px}
+.size-grid{display:flex;gap:8px;flex-wrap:wrap}
+.size-btn{padding:8px 16px;border-radius:8px;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:var(--font-body)}
+.size-btn:hover{border-color:var(--gold);color:var(--gold)}
+.size-btn.active{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+.detail-row{display:flex;gap:12px;margin:24px 0;flex-wrap:wrap}
+.detail-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px;padding:20px;background:var(--card);border-radius:var(--r);border:1px solid var(--border)}
+.dmeta-item{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.img-thumbs{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.thumb{width:64px;height:64px;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid var(--border);transition:all .2s;flex-shrink:0}
+.thumb:hover,.thumb.active{border-color:var(--gold)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.badge-tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.badge-tag.new{background:rgba(124,106,247,.15);color:var(--violet);border:1px solid rgba(124,106,247,.3)}
+.badge-tag.sale{background:rgba(255,107,107,.15);color:var(--red);border:1px solid rgba(255,107,107,.3)}
+@media(max-width:768px){.detail-layout{grid-template-columns:1fr}.detail-meta{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="hero-bg">
+  <div class="orb orb1"></div><div class="orb orb2"></div>
+  <div class="grid-bg"></div>
+</div>
+
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">Virtual<span>Fit</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="gallery.html">Shop</a></li>
+      <li><a href="tryon.html">Try-On</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="features.html">✨ AI Tools</a></li>
+    </ul>
+    <button id="navToggle" class="nav-toggle" aria-label="Menu"><i class="fas fa-bars"></i></button>
+    <div class="nav-actions">
+      <a href="cart.html" class="nav-icon"><i class="fas fa-shopping-bag"></i><span class="badge" id="cartBadge">0</span></a>
+      <a href="login.html" class="nav-icon"><i class="fas fa-user"></i></a>
+    </div>
+  </div>
+</nav>
+
+<div class="detail-page">
+  <div class="container">
+
+    <!-- Breadcrumb -->
+    <div style="margin-bottom:24px;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)">
+      <a href="index.html" style="color:var(--muted)">Home</a>
+      <i class="fas fa-chevron-right" style="font-size:10px"></i>
+      <a href="gallery.html" style="color:var(--muted)">Shop</a>
+      <i class="fas fa-chevron-right" style="font-size:10px"></i>
+      <span id="breadName" style="color:var(--text)">Product</span>
+    </div>
+
+    <div class="detail-layout">
+
+      <!-- IMAGE SECTION -->
+      <div>
+        <div class="detail-img-wrap" id="mainImgWrap">
+          <img id="mainImg" src="" alt="" style="display:none">
+          <div class="detail-img-placeholder" id="imgPlaceholder"></div>
+        </div>
+        <div class="img-thumbs" id="thumbStrip"></div>
+      </div>
+
+      <!-- INFO SECTION -->
+      <div class="detail-info">
+        <div id="dBadge"></div>
+        <div id="dBrand" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;font-weight:700"></div>
+        <h1 id="dName"></h1>
+
+        <div style="display:flex;align-items:center;gap:8px;margin:10px 0">
+          <span class="stars" id="dRating"></span>
+          <span id="dRevs" style="font-size:13px;color:var(--muted)"></span>
+          <span id="dGenderBadge" style="font-size:11px;font-weight:700;padding:2px 10px;border-radius:50px;background:var(--card);color:var(--muted);text-transform:capitalize;margin-left:4px;border:1px solid var(--border)"></span>
+        </div>
+
+        <div class="detail-price">
+          <span id="dPrice"></span>
+          <span class="old-p" id="dOld"></span>
+          <span class="save-pct" id="dSave"></span>
+        </div>
+
+        <p class="detail-desc" id="dDesc"></p>
+
+        <!-- SIZE SELECTOR -->
+        <div style="margin-bottom:20px">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px">
+            Select Size <span id="selectedSizeLabel" style="color:var(--gold);margin-left:8px"></span>
+          </div>
+          <div class="size-grid" id="dSizes"></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:10px">
+            <i class="fas fa-camera" style="color:var(--gold)"></i>
+            Use <a href="#" id="tryOnLink" style="color:var(--gold)">Virtual Try-On</a> to see how it looks on you
+          </div>
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="detail-row">
+          <button class="btn btn-gold btn-lg" id="addCartBtn" style="flex:1">
+            <i class="fas fa-shopping-bag"></i> Add to Cart
+          </button>
+          <button class="btn btn-outline btn-lg" id="tryOnBtn">
+            <i class="fas fa-camera"></i> Try On — Auto Load ✨
+          </button>
+          <button class="nav-icon" id="wishBtn" style="width:48px;height:48px;font-size:18px;flex-shrink:0">
+            <i class="far fa-heart"></i>
+          </button>
+        </div>
+
+        <!-- META INFO -->
+        <div class="detail-meta">
+          <div class="dmeta-item"><i class="fas fa-truck" style="color:var(--gold)"></i> Free delivery over Rs. 5,000</div>
+          <div class="dmeta-item"><i class="fas fa-undo" style="color:var(--gold)"></i> 30-day easy returns</div>
+          <div class="dmeta-item"><i class="fas fa-shield-alt" style="color:var(--green)"></i> Authentic product guarantee</div>
+          <div class="dmeta-item"><i class="fas fa-leaf" style="color:var(--green)"></i> Sustainable materials</div>
+        </div>
+
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;font-size:12px">
+          <span style="color:var(--muted)">Category:</span>
+          <span id="dCat" style="color:var(--gold);font-weight:600;text-transform:capitalize"></span>
+          <span style="color:var(--muted);margin-left:8px">For:</span>
+          <span id="dGender" style="color:var(--gold);font-weight:600;text-transform:capitalize"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RELATED PRODUCTS -->
+    <div style="margin-top:72px">
+      <div class="sec-head" style="text-align:left;margin-bottom:28px">
+        <span class="sec-tag">You May Also Like</span>
+        <h2 style="font-size:clamp(22px,3vw,32px)">Related Products</h2>
+      </div>
+      <div class="products-grid" id="relatedGrid"></div>
+    </div>
+
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom"><p>&copy; 2025 VirtualFit Pro. All rights reserved.</p></div>
+  </div>
+</footer>
+
+<script src="js/data.js?v=20260513"></script>
+<script>
+// ── LOAD PRODUCT ────────────────────────────────────────
+const id = parseInt(new URLSearchParams(location.search).get('id')) || 1;
+const p  = PRODUCTS.find(x => x.id === id) || PRODUCTS[0];
+
+let selectedSize = p.sizes[Math.floor(p.sizes.length / 2)];
+
+document.addEventListener('DOMContentLoaded', () => {
+  updateBadge();
+  window.addEventListener('scroll', () =>
+    document.getElementById('navbar').classList.toggle('scrolled', scrollY > 20));
+
+  // Update page title
+  document.title = p.name + ' — VirtualFit Pro';
+  document.getElementById('breadName').textContent = p.name;
+
+  // Badge
+  if (p.badge) {
+    document.getElementById('dBadge').innerHTML =
+      `<span class="badge-tag ${p.badge}">${p.badge === 'new' ? '✨ New Arrival' : '🔥 Sale'}</span>`;
+  }
+
+  // Basic info
+  document.getElementById('dBrand').textContent   = p.brand;
+  document.getElementById('dName').textContent    = p.name;
+  document.getElementById('dDesc').textContent    = p.desc;
+  document.getElementById('dCat').textContent     = p.cat;
+  document.getElementById('dGender').textContent  = p.gender;
+  document.getElementById('dGenderBadge').textContent = p.gender;
+
+  // Price
+  document.getElementById('dPrice').textContent = 'Rs. ' + p.price.toLocaleString();
+  if (p.old) {
+    document.getElementById('dOld').textContent = 'Rs. ' + p.old.toLocaleString();
+    const pct = Math.round((1 - p.price / p.old) * 100);
+    document.getElementById('dSave').textContent = pct + '% OFF';
+  }
+
+  // Rating
+  document.getElementById('dRating').textContent =
+    '★'.repeat(Math.round(p.rating)) + '☆'.repeat(5 - Math.round(p.rating));
+  document.getElementById('dRevs').textContent = '(' + p.rev + ' reviews)';
+
+  // ── IMAGE ──────────────────────────────────────────────
+  if (p.img) {
+    const mainImg = document.getElementById('mainImg');
+    mainImg.src = p.img;
+    mainImg.alt = p.name;
+    mainImg.style.display = 'block';
+    document.getElementById('imgPlaceholder').style.display = 'none';
+
+    // Thumbnail strip — show same image in different crops for visual effect
+    const thumbUrls = [
+      p.img,
+      p.img.replace('w=600', 'w=600') + '&fit=crop&crop=top',
+      p.img.replace('w=600', 'w=600') + '&fit=crop&crop=bottom',
+    ];
+    const strip = document.getElementById('thumbStrip');
+    thumbUrls.forEach((url, i) => {
+      const div = document.createElement('div');
+      div.className = 'thumb' + (i === 0 ? ' active' : '');
+      div.innerHTML = `<img src="${url}" alt="view ${i+1}" onerror="this.parentNode.style.display='none'">`;
+      div.addEventListener('click', () => {
+        mainImg.src = url;
+        document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+        div.classList.add('active');
+      });
+      strip.appendChild(div);
+    });
+  } else {
+    document.getElementById('imgPlaceholder').textContent = p.emoji || '👕';
+  }
+
+  // ── SIZES ──────────────────────────────────────────────
+  const sizeGrid = document.getElementById('dSizes');
+  p.sizes.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'size-btn' + (s === selectedSize ? ' active' : '');
+    btn.textContent = s;
+    btn.addEventListener('click', () => {
+      selectedSize = s;
+      document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('selectedSizeLabel').textContent = '— ' + s + ' selected';
+    });
+    sizeGrid.appendChild(btn);
+  });
+  document.getElementById('selectedSizeLabel').textContent = '— ' + selectedSize + ' selected';
+
+  // Load size stock from backend
+  loadSizeStock();
+
+  // ── BUTTONS ────────────────────────────────────────────
+  // ── SIZE STOCK CHECK ──────────────────────────────────
+  let sizeStockInfo = {};
+
+  async function loadSizeStock() {
+    try {
+      const res = await fetch('/api/stock/' + p.id);
+      const data = await res.json();
+      if(data.success) {
+        sizeStockInfo = {};
+        data.sizes.forEach(s => { sizeStockInfo[s.size] = s.stock; });
+        updateStockDisplay();
+      }
+    } catch(e) {}
+  }
+
+  function updateStockDisplay() {
+    // Update each size button with stock info
+    document.querySelectorAll('.size-btn').forEach(btn => {
+      const size = btn.textContent.trim();
+      const stock = sizeStockInfo[size];
+      btn.onclick = () => {
+        selectedSize = size;
+        document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('selectedSizeLabel').textContent = '— ' + size + ' selected';
+        showStockStatus(size);
+      };
+      if(stock !== undefined) {
+        if(stock === 0) {
+          btn.style.opacity = '0.4';
+          btn.style.textDecoration = 'line-through';
+          btn.title = 'Out of stock';
+        } else if(stock <= 3) {
+          btn.style.border = '1px solid var(--gold)';
+          btn.title = 'Only ' + stock + ' left!';
+        }
+      }
+    });
+    showStockStatus(selectedSize);
+  }
+
+  function showStockStatus(size) {
+    const stock = sizeStockInfo[size];
+    let el = document.getElementById('stockStatus');
+    if(!el) {
+      el = document.createElement('div');
+      el.id = 'stockStatus';
+      el.style.cssText = 'font-size:12px;margin-top:8px;font-weight:600';
+      document.getElementById('dSizes').after(el);
+    }
+    if(stock === undefined) { el.textContent = ''; return; }
+    if(stock === 0) {
+      el.style.color = 'var(--red)';
+      el.textContent = '❌ Out of stock in size ' + size;
+      document.getElementById('addCartBtn').disabled = true;
+    } else if(stock <= 3) {
+      el.style.color = 'var(--gold)';
+      el.textContent = '⚠️ Only ' + stock + ' left in size ' + size + '!';
+      document.getElementById('addCartBtn').disabled = false;
+    } else {
+      el.style.color = 'var(--green)';
+      el.textContent = '✅ In stock (' + stock + ' available)';
+      document.getElementById('addCartBtn').disabled = false;
+    }
+  }
+
+  document.getElementById('addCartBtn').addEventListener('click', () => {
+    addToCart({ id: p.id, name: p.name, price: p.price, img: p.img, size: selectedSize, gender: p.gender });
+  });
+
+  document.getElementById('tryOnBtn').addEventListener('click', () => {
+    // Pass product ID — tryon page will auto-load the garment image!
+    location.href = 'tryon.html?id=' + p.id;
+  });
+
+  document.getElementById('tryOnLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    location.href = 'tryon.html?id=' + p.id;
+  });
+
+  document.getElementById('wishBtn').addEventListener('click', function() {
+    const i = this.querySelector('i');
+    if (i.classList.contains('far')) {
+      i.className = 'fas fa-heart'; i.style.color = 'var(--red)';
+      toast('Added to wishlist ❤️');
+    } else {
+      i.className = 'far fa-heart'; i.style.color = '';
+      toast('Removed from wishlist');
+    }
+  });
+
+  // ── RELATED PRODUCTS ───────────────────────────────────
+  const related = PRODUCTS
+    .filter(x => x.id !== p.id && (x.cat === p.cat || x.gender === p.gender))
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 4);
+  document.getElementById('relatedGrid').innerHTML = related.map(productCard).join('');
+});
+</script>
+</body>
+</html>

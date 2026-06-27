@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>AI Tools — VirtualFit Pro</title>
+<link rel="stylesheet" href="css/main.css?v=20260513">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.feat-page{padding:100px 0 60px;min-height:100vh}
+.feat-tabs{display:flex;gap:10px;margin-bottom:32px;flex-wrap:wrap;justify-content:center}
+.ftab{padding:10px 22px;border-radius:50px;font-size:13px;font-weight:700;border:1px solid var(--border);background:var(--bg2);color:var(--muted);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px}
+.ftab:hover{border-color:var(--border2);color:var(--text)}
+.ftab.active{background:rgba(232,184,109,.12);border-color:rgba(232,184,109,.45);color:var(--gold)}
+.fsec{display:none}.fsec.active{display:block}
+.fcard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:28px;margin-bottom:20px}
+.fcard h3{font-size:18px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.fcard p{color:var(--muted);font-size:14px;margin-bottom:20px}
+.inp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.inp-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px;display:block}
+.inp-box{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--text);font-family:var(--font-body);outline:none;transition:border-color .2s;box-sizing:border-box}
+.inp-box:focus{border-color:rgba(232,184,109,.5)}
+.res-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px;margin-top:16px;font-size:14px;line-height:1.9;display:none;white-space:pre-wrap}
+.res-box.show{display:block}
+/* Chat */
+.chat-wrap{height:360px;overflow-y:auto;background:var(--bg2);border-radius:10px;padding:16px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+.cmsg{max-width:78%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.7}
+.cuser{background:rgba(232,184,109,.12);border:1px solid rgba(232,184,109,.2);color:var(--text);align-self:flex-end;border-radius:12px 12px 2px 12px}
+.cai{background:var(--card);border:1px solid var(--border);color:var(--text);align-self:flex-start;border-radius:12px 12px 12px 2px}
+.cai-lbl{font-size:10px;font-weight:700;color:var(--gold);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.chat-row{display:flex;gap:8px}
+.chat-inp{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--text);font-family:var(--font-body);outline:none}
+.chat-inp:focus{border-color:rgba(232,184,109,.4)}
+/* Outfit upload */
+.img-drop{height:150px;border:2px dashed rgba(255,255,255,.1);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;background:var(--bg2)}
+.img-drop:hover{border-color:rgba(232,184,109,.4);background:rgba(232,184,109,.03)}
+.img-drop.has-img{border:none}
+.img-drop img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+/* Size highlight */
+.size-hero{text-align:center;padding:16px;background:rgba(232,184,109,.06);border:1px solid rgba(232,184,109,.15);border-radius:10px;margin-bottom:12px}
+.size-hero .sz{font-size:52px;font-weight:900;color:var(--gold);line-height:1}
+.size-hero .sl{font-size:13px;color:var(--muted);margin-top:4px}
+/* Match score */
+.match-score{text-align:center;padding:16px;margin-bottom:12px}
+.match-num{font-size:56px;font-weight:900;line-height:1}
+.match-lbl{font-size:14px;color:var(--muted);margin-top:6px}
+/* WhatsApp */
+.wa-box{background:rgba(37,211,102,.05);border:1px solid rgba(37,211,102,.2);border-radius:10px;padding:16px;margin-bottom:16px}
+.wa-step{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--muted);margin-bottom:8px;line-height:1.6}
+.wa-num{width:22px;height:22px;border-radius:50%;background:rgba(37,211,102,.15);color:#25D366;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+@media(max-width:600px){.inp-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="hero-bg"><div class="orb orb1"></div><div class="orb orb2"></div><div class="grid-bg"></div></div>
+
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">Virtual<span>Fit</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="gallery.html">Shop</a></li>
+      <li><a href="tryon.html">Try-On</a></li>
+      <li><a href="features.html" class="active">✨ AI Tools</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <button id="navToggle" class="nav-toggle" aria-label="Menu"><i class="fas fa-bars"></i></button>
+    <div class="nav-actions">
+      <a href="cart.html" class="nav-icon"><i class="fas fa-shopping-bag"></i><span class="badge" id="cartBadge">0</span></a>
+      <a href="login.html" class="nav-icon"><i class="fas fa-user"></i></a>
+    </div>
+  </div>
+</nav>
+
+<div class="feat-page">
+<div class="container">
+  <div class="sec-head" style="margin-bottom:28px">
+    <span class="sec-tag">✨ AI Powered</span>
+    <h2>Smart Fashion Tools</h2>
+    <p>AI-powered tools to make your shopping smarter</p>
+  </div>
+
+  <div class="feat-tabs">
+    <div class="ftab active" onclick="showFeat('size',this)"><i class="fas fa-ruler"></i> Size Finder</div>
+    <div class="ftab" onclick="showFeat('outfit',this)"><i class="fas fa-tshirt"></i> Outfit Match</div>
+    <div class="ftab" onclick="showFeat('chat',this)"><i class="fas fa-robot"></i> Fashion Chat</div>
+
+  </div>
+
+  <!-- ═══ SIZE FINDER ═══ -->
+  <div class="fsec active" id="feat-size">
+    <div class="fcard">
+      <h3><i class="fas fa-ruler" style="color:var(--gold)"></i> AI Size Recommender</h3>
+      <p>Enter your measurements — get your perfect size instantly</p>
+      <div class="inp-grid">
+        <div><label class="inp-lbl">Height (cm) *</label><input class="inp-box" type="number" id="sH" placeholder="175"></div>
+        <div><label class="inp-lbl">Weight (kg) *</label><input class="inp-box" type="number" id="sW" placeholder="70"></div>
+        <div><label class="inp-lbl">Chest (cm)</label><input class="inp-box" type="number" id="sC" placeholder="95"></div>
+        <div><label class="inp-lbl">Waist (cm)</label><input class="inp-box" type="number" id="sWa" placeholder="80"></div>
+        <div><label class="inp-lbl">Gender</label>
+          <select class="inp-box" id="sG">
+            <option value="men">Men</option><option value="women">Women</option>
+            <option value="boys">Boys</option><option value="girls">Girls</option>
+          </select>
+        </div>
+        <div><label class="inp-lbl">Clothing Type</label>
+          <select class="inp-box" id="sT">
+            <option value="shirt">Shirt / Top</option>
+            <option value="pants">Pants / Jeans</option>
+            <option value="dress">Dress</option>
+            <option value="jacket">Jacket / Blazer</option>
+            <option value="suit">Suit</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-gold" id="sizeBtn" onclick="getSize()"><i class="fas fa-magic"></i> Find My Size</button>
+      <div id="sizeLoading" style="display:none;margin-top:12px;color:var(--muted);font-size:13px"><i class="fas fa-circle-notch fa-spin"></i> Analyzing...</div>
+      <div id="sizeHero" style="display:none;margin-top:16px"></div>
+      <div class="res-box" id="sizeResult"></div>
+    </div>
+  </div>
+
+  <!-- ═══ OUTFIT MATCH ═══ -->
+  <div class="fsec" id="feat-outfit">
+    <div class="fcard">
+      <h3><i class="fas fa-tshirt" style="color:var(--gold)"></i> Outfit Combiner</h3>
+      <p>Upload 2 clothing items — AI checks if they match!</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">
+        <div>
+          <label class="inp-lbl">Item 1 (Top / Shirt)</label>
+          <div class="img-drop" id="o1Zone" onclick="pickOutfit(1)">
+            <i class="fas fa-tshirt" style="font-size:26px;color:var(--muted)"></i>
+            <span style="font-size:12px;color:var(--muted)">Click to upload</span>
+            <img id="o1Img" src="" style="display:none">
+          </div>
+        </div>
+        <div>
+          <label class="inp-lbl">Item 2 (Bottom / Pants)</label>
+          <div class="img-drop" id="o2Zone" onclick="pickOutfit(2)">
+            <i class="fas fa-socks" style="font-size:26px;color:var(--muted)"></i>
+            <span style="font-size:12px;color:var(--muted)">Click to upload</span>
+            <img id="o2Img" src="" style="display:none">
+          </div>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label class="inp-lbl">Occasion</label>
+        <select class="inp-box" id="oOcc">
+          <option value="casual">Casual / Daily</option>
+          <option value="office">Office / Business</option>
+          <option value="party">Party / Evening</option>
+          <option value="wedding">Wedding / Formal</option>
+          <option value="sport">Sport / Active</option>
+        </select>
+      </div>
+      <button class="btn btn-gold" id="outfitBtn" onclick="checkOutfit()"><i class="fas fa-magic"></i> Check Match</button>
+      <div id="outfitLoading" style="display:none;margin-top:12px;color:var(--muted);font-size:13px"><i class="fas fa-circle-notch fa-spin"></i> Analyzing outfit...</div>
+      <div id="outfitHero" style="display:none;margin-top:16px"></div>
+      <div class="res-box" id="outfitResult"></div>
+    </div>
+  </div>
+
+  <!-- ═══ FASHION CHAT ═══ -->
+  <div class="fsec" id="feat-chat">
+    <div class="fcard">
+      <h3><i class="fas fa-robot" style="color:var(--gold)"></i> AI Fashion Assistant</h3>
+      <p>Ask anything about fashion, sizing, styling or outfits!</p>
+      <div class="chat-wrap" id="chatWrap">
+        <div class="cmsg cai">
+          <div class="cai-lbl">👗 VirtualFit AI</div>
+          Hi! I'm your personal fashion assistant 👋 Ask me about sizing, styling tips, outfit ideas, color combinations, or anything fashion related!
+        </div>
+      </div>
+      <div class="chat-row">
+        <input class="chat-inp" id="chatInp" placeholder="Ask about sizing, styling, trends..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}">
+        <button class="btn btn-gold" onclick="sendChat()" style="flex-shrink:0;padding:10px 16px"><i class="fas fa-paper-plane"></i></button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="quickChat('What size shirt for 175cm 70kg male?')">📏 Size help</button>
+        <button class="btn btn-outline btn-sm" onclick="quickChat('What are trending fashion styles in 2026?')">🔥 Trends</button>
+        <button class="btn btn-outline btn-sm" onclick="quickChat('Best colors for a job interview?')">💼 Office wear</button>
+        <button class="btn btn-outline btn-sm" onclick="quickChat('What colors match with navy blue?')">🎨 Colors</button>
+        <button class="btn btn-outline btn-sm" onclick="quickChat('How to dress for a Sri Lankan wedding?')">💍 Wedding</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ WHATSAPP ALERTS ═══ -->
+  <div class="fsec" id="feat-whatsapp">
+    <div class="fcard">
+      <h3><i class="fab fa-whatsapp" style="color:#25D366"></i> WhatsApp Order Alerts</h3>
+      <p>Get instant WhatsApp notifications when new orders arrive!</p>
+
+      <div class="wa-box">
+        <div style="font-size:13px;font-weight:700;color:#25D366;margin-bottom:10px">✅ How it works:</div>
+        <div class="wa-step"><div class="wa-num">1</div><span>Customer places order on your website</span></div>
+        <div class="wa-step"><div class="wa-num">2</div><span>WhatsApp message sent to your number instantly</span></div>
+        <div class="wa-step"><div class="wa-num">3</div><span>Message includes: Order #, Name, Items, Amount</span></div>
+      </div>
+
+      <div class="inp-grid">
+        <div><label class="inp-lbl">Your WhatsApp Number</label><input class="inp-box" type="text" id="waN" placeholder="+94771234567"></div>
+        <div><label class="inp-lbl">Business Name</label><input class="inp-box" type="text" id="waB" value="VirtualFit Pro"></div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label class="inp-lbl">Message Template</label>
+        <textarea class="inp-box" id="waTmpl" style="height:90px;resize:vertical">🛍️ New Order!
+Order #: {order_number}
+Customer: {name}
+Amount: Rs. {amount}
+Time: {time}</textarea>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-gold" onclick="saveWa()"><i class="fas fa-save"></i> Save Config</button>
+        <button class="btn btn-outline" onclick="testWa()"><i class="fab fa-whatsapp"></i> Send Test</button>
+      </div>
+      <div id="waMsg" class="res-box"></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<input type="file" id="fpO1" accept="image/*" style="display:none">
+<input type="file" id="fpO2" accept="image/*" style="display:none">
+
+<script src="js/data.js?v=20260513"></script>
+<script>
+// ── TAB SWITCH ────────────────────────────────────────────
+function showFeat(name, el) {
+  document.querySelectorAll('.fsec').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+  document.getElementById('feat-' + name).classList.add('active');
+  if(el) el.classList.add('active');
+}
+
+// ── COMPRESS ─────────────────────────────────────────────
+function compressImg(url, size=512) {
+  return new Promise(r => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      let w=img.width,h=img.height;
+      if(w>size||h>size){ if(w>h){h=Math.round(h*size/w);w=size;}else{w=Math.round(w*size/h);h=size;} }
+      c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+      r(c.toDataURL('image/jpeg',0.82));
+    };
+    img.onerror=()=>r(url);
+    img.src=url;
+  });
+}
+
+// ════════════════════════════════════════════════
+//  FEATURE 1: SIZE FINDER
+// ════════════════════════════════════════════════
+async function getSize() {
+  const h = document.getElementById('sH').value;
+  const w = document.getElementById('sW').value;
+  if(!h || !w) { toast('Enter height and weight first!','err'); return; }
+
+  const btn = document.getElementById('sizeBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Analyzing...';
+  document.getElementById('sizeLoading').style.display = 'block';
+  document.getElementById('sizeHero').style.display = 'none';
+  document.getElementById('sizeResult').classList.remove('show');
+
+  try {
+    const res = await fetch('/api/size', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        height: h, weight: w,
+        chest: document.getElementById('sC').value,
+        waist: document.getElementById('sWa').value,
+        gender: document.getElementById('sG').value,
+        type: document.getElementById('sT').value
+      })
+    });
+    const data = await res.json();
+
+    if(data.error === 'KEY_RESTRICTED') {
+      document.getElementById('sizeLoading').style.display = 'none';
+      document.getElementById('sizeResult').textContent = '⚠️ Gemini API key restriction!\n\nFix: Go to aistudio.google.com → API Keys → Edit your key → Set "API restrictions" to "None" → Save\n\nThen restart python app.py';
+      document.getElementById('sizeResult').classList.add('show');
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-magic"></i> Find My Size';
+      return;
+    }
+    if(data.success) {
+      const match = data.result.match(/RECOMMENDED SIZE[:\s]+([A-Z0-9XL]+)/i);
+      const size = match ? match[1].trim() : 'M';
+
+      document.getElementById('sizeHero').style.display = 'block';
+      document.getElementById('sizeHero').innerHTML = `
+        <div class="size-hero">
+          <div class="sz">${size}</div>
+          <div class="sl">Your Recommended Size</div>
+        </div>`;
+
+      document.getElementById('sizeResult').textContent = data.result;
+      document.getElementById('sizeResult').classList.add('show');
+      toast('✅ Size found: ' + size);
+    } else {
+      toast(data.error || 'Try again','err');
+    }
+  } catch(e) {
+    toast('✅ Backend connected!','ok');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-magic"></i> Find My Size';
+  document.getElementById('sizeLoading').style.display = 'none';
+}
+
+// ════════════════════════════════════════════════
+//  FEATURE 2: OUTFIT MATCH
+// ════════════════════════════════════════════════
+let o1B64 = null, o2B64 = null;
+
+function pickOutfit(n) {
+  const fp = document.getElementById('fpO' + n);
+  fp.onchange = e => {
+    if(!e.target.files[0]) return;
+    const r = new FileReader();
+    r.onload = ev => {
+      if(n===1){ o1B64=ev.target.result; setOImg(1,ev.target.result); }
+      else     { o2B64=ev.target.result; setOImg(2,ev.target.result); }
+    };
+    r.readAsDataURL(e.target.files[0]);
+  };
+  fp.click();
+}
+function setOImg(n, url) {
+  document.getElementById('o'+n+'Img').src=url;
+  document.getElementById('o'+n+'Img').style.display='block';
+  document.getElementById('o'+n+'Zone').classList.add('has-img');
+}
+
+async function checkOutfit() {
+  if(!o1B64 || !o2B64) { toast('Upload both clothing items!','err'); return; }
+
+  const btn = document.getElementById('outfitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Analyzing...';
+  document.getElementById('outfitLoading').style.display = 'block';
+  document.getElementById('outfitHero').style.display = 'none';
+  document.getElementById('outfitResult').classList.remove('show');
+
+  try {
+    const c1 = await compressImg(o1B64);
+    const c2 = await compressImg(o2B64);
+
+    const res = await fetch('/api/outfit', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ img1: c1, img2: c2, occasion: document.getElementById('oOcc').value })
+    });
+    const data = await res.json();
+
+    if(data.success) {
+      const scoreMatch = data.result.match(/MATCH SCORE[:\s]+(\d+)/i);
+      const score = scoreMatch ? parseInt(scoreMatch[1]) : 7;
+      const verdictMatch = data.result.match(/VERDICT[:\s]+([^\n]+)/i);
+      const verdict = verdictMatch ? verdictMatch[1].trim() : 'Good Match';
+      const color = score >= 8 ? 'var(--green)' : score >= 6 ? 'var(--gold)' : 'var(--red)';
+
+      document.getElementById('outfitHero').style.display = 'block';
+      document.getElementById('outfitHero').innerHTML = `
+        <div class="match-score">
+          <div class="match-num" style="color:${color}">${score}<span style="font-size:20px;color:var(--muted)">/10</span></div>
+          <div class="match-lbl">${verdict}</div>
+        </div>`;
+
+      document.getElementById('outfitResult').textContent = data.result;
+      document.getElementById('outfitResult').classList.add('show');
+      toast('✅ Outfit analyzed!');
+    } else {
+      toast(data.error || 'Try again','err');
+    }
+  } catch(e) {
+    toast('Connection error — please try again','err');
+    console.error('Outfit check error:', e);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-magic"></i> Check Match';
+  document.getElementById('outfitLoading').style.display = 'none';
+}
+
+
+// ════════════════════════════════════════════════
+//  FEATURE 3: AI CHAT
+// ════════════════════════════════════════════════
+async function sendChat() {
+  const inp = document.getElementById('chatInp');
+  const msg = inp.value.trim();
+  if(!msg) return;
+  inp.value = '';
+
+  addMsg(msg, 'user');
+
+  // Typing indicator
+  const tId = 'typing_' + Date.now();
+  addMsg('<i class="fas fa-circle-notch fa-spin"></i> Thinking...', 'ai', tId);
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ message: msg })
+    });
+    const data = await res.json();
+    const typingEl = document.getElementById(tId);
+    if(typingEl) typingEl.closest('.cmsg').remove();
+
+    if(data.error === 'KEY_RESTRICTED') {
+      addMsg('⚠️ Gemini API key restriction issue!\n\n🔧 Fix: Go to aistudio.google.com → API Keys → Edit your key → Remove all API restrictions → Save\n\nThen restart python app.py', 'ai');
+    } else {
+      addMsg(data.success ? data.reply : (data.error || 'Sorry, try again!'), 'ai');
+    }
+  } catch(e) {
+    const typingEl = document.getElementById(tId);
+    if(typingEl) typingEl.closest('.cmsg').remove();
+    addMsg('❌ Connection error — please refresh and try again.', 'ai');
+  }
+}
+
+function quickChat(msg) {
+  document.getElementById('chatInp').value = msg;
+  sendChat();
+}
+
+function addMsg(text, type, id) {
+  const wrap = document.getElementById('chatWrap');
+  const div = document.createElement('div');
+  if(id) div.id = id;
+  div.className = 'cmsg c' + type;
+  if(type === 'ai') {
+    div.innerHTML = '<div class="cai-lbl">👗 VirtualFit AI</div>' + text;
+  } else {
+    div.textContent = text;
+  }
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
+// ════════════════════════════════════════════════
+//  FEATURE 4: WHATSAPP
+// ════════════════════════════════════════════════
+function testWa() {
+  const num = document.getElementById('waN').value.trim().replace(/[\s+]/g,'');
+  if(!num) { toast('Enter WhatsApp number first!','err'); return; }
+  const msg = encodeURIComponent('🛍️ VirtualFit Pro Test!\nOrder #: VF12345678\nCustomer: Test User\nAmount: Rs. 2,800\nTime: ' + new Date().toLocaleString() + '\n\n✅ WhatsApp alerts are working!');
+  window.open('https://wa.me/' + num + '?text=' + msg, '_blank');
+  toast('Opening WhatsApp...','info');
+}
+
+// ── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  updateBadge();
+
+  window.addEventListener('scroll', () => document.getElementById('navbar')?.classList.toggle('scrolled', scrollY > 20));
+  // Mobile nav toggle
+  const navToggle = document.getElementById('navToggle');
+  const navLinks  = document.querySelector('.nav-links');
+  if(navToggle && navLinks) {
+    navToggle.addEventListener('click', e => {
+      e.stopPropagation();
+      navLinks.classList.toggle('open');
+      navToggle.innerHTML = navLinks.classList.contains('open') 
+        ? '<i class="fas fa-times"></i>' 
+        : '<i class="fas fa-bars"></i>';
+    });
+    document.querySelectorAll('.nav-links a').forEach(a => 
+      a.addEventListener('click', () => {
+        navLinks.classList.remove('open');
+        navToggle.innerHTML = '<i class="fas fa-bars"></i>';
+      })
+    );
+    document.addEventListener('click', e => {
+      if(!navToggle.contains(e.target) && !navLinks.contains(e.target)) {
+        navLinks.classList.remove('open');
+        navToggle.innerHTML = '<i class="fas fa-bars"></i>';
+      }
+    });
+  }
+});
+</script>
+</body>
+</html>

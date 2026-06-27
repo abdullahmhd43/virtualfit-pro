@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VirtualFit Pro — AI Online Trial Room</title>
+<link rel="stylesheet" href="css/main.css?v=20260513">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">Virtual<span>Fit</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="gallery.html">Shop</a></li>
+      <li><a href="tryon.html">Try-On</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="features.html">✨ AI Tools</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="cart.html" class="nav-icon"><i class="fas fa-shopping-bag"></i><span class="badge" id="cartBadge">0</span></a>
+      <a href="login.html" class="nav-icon" id="loginBtn"><i class="fas fa-user"></i></a>
+      <button class="nav-toggle" id="navToggle"><i class="fas fa-bars"></i></button>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div><div class="grid-bg"></div></div>
+  <div class="hero-inner container">
+    <div class="hero-content">
+      <div class="hero-pill"><span class="pulse"></span>AI + AR Virtual Try-On Technology</div>
+      <h1 class="hero-title">Try Before<br>You <em>Buy</em></h1>
+      <p class="hero-sub">Upload your photo or use camera — our AI detects your body, measures you precisely, and shows how clothes look on YOU in real-time.</p>
+      <div class="hero-btns">
+        <a href="tryon.html" class="btn btn-gold btn-lg"><i class="fas fa-camera"></i> Start Try-On</a>
+        <a href="gallery.html" class="btn btn-outline btn-lg"><i class="fas fa-tshirt"></i> Browse Shop</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat"><span>50K+</span><small>Happy Customers</small></div>
+        <div class="hdiv"></div>
+        <div class="hstat"><span>94%</span><small>AI Accuracy</small></div>
+        <div class="hdiv"></div>
+        <div class="hstat"><span>-60%</span><small>Return Rate</small></div>
+        <div class="hdiv"></div>
+        <div class="hstat"><span>3</span><small>Genders</small></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="ar-preview">
+            <div class="ar-person">🧍</div>
+            <div class="ar-cloth-demo">👔</div>
+            <div class="ar-scanline"></div>
+            <div class="ar-badge">AI Size: M • 94% Match</div>
+          </div>
+        </div>
+      </div>
+      <div class="fc fc1"><i class="fas fa-check-circle"></i> Perfect Fit Found!</div>
+      <div class="fc fc2"><i class="fas fa-brain"></i> Chest: 96cm • Size M</div>
+    </div>
+  </div>
+</div>
+
+<!-- GENDER SECTIONS -->
+<section class="section section-alt">
+  <div class="container">
+    <div class="sec-head">
+      <span class="sec-tag">Shop by Category</span>
+      <h2>Men · Women · Boys · Girls · Mid-Age</h2>
+      <p>Browse our full collection — AI try-on available for every product</p>
+    </div>
+    <div class="gender-tabs">
+      <button class="gtab active" data-g="men"     onclick="switchGender('men',this)"><span class="gtab-icon">👔</span> Men</button>
+      <button class="gtab"        data-g="women"   onclick="switchGender('women',this)"><span class="gtab-icon">👗</span> Women</button>
+      <button class="gtab"        data-g="boys"    onclick="switchGender('boys',this)"><span class="gtab-icon">👦</span> Boys</button>
+      <button class="gtab"        data-g="girls"   onclick="switchGender('girls',this)"><span class="gtab-icon">👧</span> Girls</button>
+      <button class="gtab"        data-g="mid-age" onclick="switchGender('mid-age',this)"><span class="gtab-icon">🧑</span> Mid-Age</button>
+    </div>
+    <div id="genderGrid" class="products-grid"></div>
+    <div style="text-align:center;margin-top:36px">
+      <a href="gallery.html" class="btn btn-outline btn-lg">View All Products <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section">
+  <div class="container">
+    <div class="sec-head">
+      <span class="sec-tag">How It Works</span>
+      <h2>Three Steps to Your Perfect Fit</h2>
+    </div>
+    <div class="steps-3">
+      <div class="step"><div class="step-n">01</div><div class="step-ic"><i class="fas fa-camera"></i></div><h3>Capture Your Look</h3><p>Upload a photo or use your live camera. Our AI instantly maps 17 body keypoints using TensorFlow.js MoveNet.</p></div>
+      <div class="step"><div class="step-n">02</div><div class="step-ic"><i class="fas fa-brain"></i></div><h3>AI Measures You</h3><p>The system calculates your chest, waist, hips, shoulder width, height, and body type — automatically, in seconds.</p></div>
+      <div class="step"><div class="step-n">03</div><div class="step-ic"><i class="fas fa-tshirt"></i></div><h3>See & Buy with Confidence</h3><p>Clothes are overlaid on your body in real-time. AI recommends your exact size. Add to cart and checkout securely.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section section-alt">
+  <div class="container">
+    <div class="features-2">
+      <div>
+        <span class="sec-tag">Why VirtualFit Pro</span>
+        <h2 style="font-family:var(--font-head);font-size:40px;font-weight:800;margin-bottom:36px">The Future of Fashion Shopping</h2>
+        <div class="feat-list">
+          <div class="feat-item"><div class="feat-ic"><i class="fas fa-brain"></i></div><div><h4>TensorFlow.js AI Body Analysis</h4><p>Real MoveNet pose detection: 17 keypoints, measurements auto-calculated in real-time.</p></div></div>
+          <div class="feat-item"><div class="feat-ic"><i class="fas fa-vr-cardboard"></i></div><div><h4>AR Clothing Overlay</h4><p>Garments rendered directly on your camera feed or uploaded photo using Canvas API.</p></div></div>
+          <div class="feat-item"><div class="feat-ic"><i class="fas fa-ruler"></i></div><div><h4>Manual Measurement Input</h4><p>Don't have a photo? Enter your chest/waist/hips manually — AI instantly recommends your size.</p></div></div>
+          <div class="feat-item"><div class="feat-ic"><i class="fas fa-users"></i></div><div><h4>Men · Women · Boys · Girls · Mid-Age</h4><p>Full collections for everyone — size charts customised per gender and age group.</p></div></div>
+          <div class="feat-item"><div class="feat-ic"><i class="fas fa-credit-card"></i></div><div><h4>Stripe Secure Checkout</h4><p>256-bit SSL encryption, Stripe payment gateway, PayPal, and Cash on Delivery.</p></div></div>
+        </div>
+      </div>
+      <div class="blob-visual">
+        <div class="blob"><div class="blob-inner"><div class="big">🤖</div><p style="margin-top:12px;font-weight:700">TensorFlow.js<br>MoveNet AI</p><p style="font-size:12px;margin-top:6px;color:var(--muted)">17 keypoints • Real-time</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-about">
+        <a class="nav-logo" href="#">Virtual<span style="color:var(--gold)">Fit</span></a>
+        <p>AI-powered virtual try-on for men, women, boys, girls & mid-age. Try before you buy.</p>
+      </div>
+      <div><h5>Shop</h5><ul><li><a href="gallery.html?g=men">Men</a></li><li><a href="gallery.html?g=women">Women</a></li><li><a href="gallery.html?g=boys">Boys</a></li><li><a href="gallery.html?g=girls">Girls</a></li><li><a href="gallery.html?g=mid-age">Mid-Age</a></li><li><a href="tryon.html">Try-On Room</a></li></ul></div>
+      <div><h5>Account</h5><ul><li><a href="login.html">Login</a></li><li><a href="register.html">Register</a></li><li><a href="profile.html">My Profile</a></li><li><a href="cart.html">Cart</a></li></ul></div>
+      <div><h5>Support</h5><ul><li><a href="contact.html">Contact Us</a></li><li><a href="#">Size Guide</a></li><li><a href="#">Returns Policy</a></li></ul></div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 VirtualFit Pro. All rights reserved.</p>
+      <div class="f-social"><a href="#"><i class="fab fa-instagram"></i></a><a href="#"><i class="fab fa-twitter"></i></a><a href="#"><i class="fab fa-facebook"></i></a></div>
+    </div>
+  </div>
+</footer>
+
+<script src="js/data.js?v=20260513"></script>
+<script>
+let currentGender = 'men';
+function switchGender(g, btn) {
+  currentGender = g;
+  document.querySelectorAll('.gtab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const grid = document.getElementById('genderGrid');
+  const items = PRODUCTS.filter(p => p.gender === g).slice(0, 8);
+  grid.innerHTML = items.map(productCard).join('');
+}
+document.addEventListener('DOMContentLoaded', () => {
+  switchGender('men', document.querySelector('.gtab[data-g="men"]'));
+});
+</script>
+</body>
+</html>

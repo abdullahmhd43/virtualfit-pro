@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// Admin access protection — also check session expiry (4 hours)
+const _adminTime = sessionStorage.getItem('vf_admin_time');
+const _expired   = _adminTime && (Date.now() - parseInt(_adminTime)) > 4 * 60 * 60 * 1000;
+if(sessionStorage.getItem('vf_admin') !== '1' || _expired) {
+    sessionStorage.removeItem('vf_admin');
+    window.location.replace('admin-login.html');
+}
+</script>
+
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin — VirtualFit Pro</title>
+<link rel="stylesheet" href="css/main.css?v=20260513">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box}
+.admin-wrap{display:grid;grid-template-columns:220px 1fr;min-height:100vh;padding-top:64px}
+
+/* SIDEBAR */
+.admin-side{background:var(--bg2);border-right:1px solid var(--border);padding:20px 0;position:fixed;top:64px;left:0;width:220px;height:calc(100vh - 64px);overflow-y:auto;z-index:50}
+.side-section{padding:8px 16px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-top:16px}
+.side-link{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s;border-left:3px solid transparent}
+.side-link:hover{background:rgba(232,184,109,.06);color:var(--text)}
+.side-link.active{background:rgba(232,184,109,.1);color:var(--gold);border-left-color:var(--gold)}
+.side-link i{width:18px;text-align:center;font-size:14px}
+.side-badge{margin-left:auto;background:rgba(255,107,107,.15);color:var(--red);font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px}
+.side-badge.gold{background:rgba(232,184,109,.15);color:var(--gold)}
+
+/* MAIN */
+.admin-main{grid-column:2;padding:24px;min-height:100vh}
+.tab-section{display:none}.tab-section.active{display:block}
+
+/* STATS ROW */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;text-align:center}
+.stat-box .n{font-size:28px;font-weight:900;color:var(--gold)}
+.stat-box .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.data-table td{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle}
+.data-table tr:hover td{background:rgba(255,255,255,.02)}
+.tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.tbl-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px}
+.tbl-head h3{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.tbl-head h3 i{color:var(--gold)}
+.tbl-search{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);font-family:var(--font-body);outline:none;width:220px}
+.tbl-search:focus{border-color:rgba(232,184,109,.4)}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.b-new{background:rgba(124,106,247,.15);color:var(--violet)}
+.b-sale{background:rgba(255,107,107,.15);color:var(--red)}
+.b-pending{background:rgba(232,184,109,.15);color:var(--gold)}
+.b-confirmed{background:rgba(124,106,247,.15);color:var(--violet)}
+.b-processing{background:rgba(96,165,250,.15);color:#60a5fa}
+.b-shipped{background:rgba(251,191,36,.15);color:#fbbf24}
+.b-delivered{background:rgba(76,222,138,.15);color:var(--green)}
+.b-cancelled{background:rgba(255,107,107,.15);color:var(--red)}
+.b-customer{background:rgba(76,222,138,.1);color:var(--green)}
+.b-admin{background:rgba(232,184,109,.1);color:var(--gold)}
+
+/* FORM PANEL */
+.form-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:20px}
+.form-panel h3{font-size:14px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.form-panel h3 i{color:var(--gold)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--font-body);outline:none}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:rgba(232,184,109,.5)}
+.fg textarea{height:70px;resize:vertical}
+.img-prev{width:100%;height:120px;background:var(--bg2);border:2px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;margin-top:6px}
+.img-prev img{width:100%;height:100%;object-fit:cover}
+
+/* PRODUCT CARD (admin) */
+.prod-row{display:flex;align-items:center;gap:12px}
+.prod-thumb{width:44px;height:44px;border-radius:6px;object-fit:cover;background:var(--bg2);flex-shrink:0}
+
+/* ACTION BUTTONS */
+.act-btn{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;border:none;cursor:pointer;font-family:var(--font-body);display:inline-flex;align-items:center;gap:4px;transition:all .2s}
+.act-edit{background:rgba(124,106,247,.12);color:var(--violet)}
+.act-edit:hover{background:rgba(124,106,247,.25)}
+.act-del{background:rgba(255,107,107,.1);color:var(--red)}
+.act-del:hover{background:rgba(255,107,107,.25)}
+.act-view{background:rgba(76,222,138,.1);color:var(--green)}
+.act-view:hover{background:rgba(76,222,138,.25)}
+.act-badge{background:rgba(232,184,109,.1);color:var(--gold)}
+.act-badge:hover{background:rgba(232,184,109,.25)}
+
+/* STATUS SELECT */
+.status-sel{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;color:var(--text);font-family:var(--font-body);outline:none;cursor:pointer}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:9999;display:none;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:28px;width:92%;max-width:520px;max-height:85vh;overflow-y:auto}
+.modal-box h3{font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+
+/* LOGIN */
+#loginBox{position:fixed;inset:0;background:rgba(9,9,15,.96);display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:40px;width:340px;text-align:center}
+.login-card h2{font-family:var(--font-head);font-size:28px;margin-bottom:8px}
+
+/* CHART */
+.chart-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:20px}
+.chart-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px}
+.chart-box h3{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.chart-box h3 i{color:var(--gold)}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .admin-wrap{grid-template-columns:1fr}
+  .admin-side{display:none}
+  .admin-main{grid-column:1;padding:16px}
+  .stat-row{grid-template-columns:repeat(2,1fr)}
+  .form-grid{grid-template-columns:1fr}
+  .chart-row{grid-template-columns:1fr}
+}
+@media(max-width:480px){.stat-row{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<div class="hero-bg"><div class="orb orb1"></div><div class="grid-bg"></div></div>
+
+<!-- NAVBAR -->
+<nav class="navbar scrolled" id="navbar" style="position:fixed;top:0;left:0;right:0;z-index:100">
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">Virtual<span>Fit</span> <span style="font-size:10px;color:var(--gold);margin-left:6px;font-weight:700">ADMIN</span></a>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span id="sbStatus" style="font-size:11px;color:var(--muted)">⏳ Connecting...</span>
+      <a href="index.html" class="btn btn-outline btn-sm"><i class="fas fa-external-link-alt"></i> View Site</a>
+      <button onclick="doLogout()" class="btn btn-sm" style="background:rgba(255,107,107,.1);color:var(--red);border:1px solid rgba(255,107,107,.2)"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </div>
+</nav>
+
+<div class="admin-wrap">
+
+  <!-- SIDEBAR -->
+  <div class="admin-side">
+    <div class="side-section">Dashboard</div>
+    <div class="side-link active" onclick="showTab('dashboard',this)"><i class="fas fa-chart-pie"></i> Overview</div>
+
+    <div class="side-section">Catalogue</div>
+    <div class="side-link" onclick="showTab('products',this)"><i class="fas fa-tshirt"></i> Products</div>
+    <div class="side-link" onclick="showTab('addproduct',this)"><i class="fas fa-plus-circle"></i> Add Product</div>
+
+    <div class="side-section">Sales</div>
+    <div class="side-link" onclick="showTab('orders',this)"><i class="fas fa-shopping-bag"></i> Orders <span class="side-badge gold" id="pendingBadge">0</span></div>
+
+    <div class="side-section">Customers</div>
+    <div class="side-link" onclick="showTab('users',this)"><i class="fas fa-users"></i> All Users</div>
+
+    <div class="side-section">Try-On</div>
+    <div class="side-link" onclick="showTab('tryon',this)"><i class="fas fa-camera"></i> Try-On History</div>
+
+    <div class="side-section">Links</div>
+    <div class="side-link" onclick="window.open('https://supabase.com/dashboard/project/fcretwoovhfzeqziucca','_blank')"><i class="fas fa-database"></i> Supabase DB</div>
+    <div class="side-link" onclick="location.href='analytics.html'"><i class="fas fa-chart-bar"></i> Analytics</div>
+    <div class="side-link" onclick="location.href='reports.html'"><i class="fas fa-file-alt"></i> Reports</div>
+
+    <div class="side-section">Alerts</div>
+    <div class="side-link" onclick="showTab('alerts',this)"><i class="fab fa-whatsapp" style="color:#25D366"></i> WhatsApp Alerts</div>
+
+    <div class="side-section">Settings</div>
+    <div class="side-link" onclick="showTab('apikeys',this)"><i class="fas fa-key"></i> API Keys</div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="admin-main">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="tab-section active" id="tab-dashboard">
+      <h2 style="font-family:var(--font-head);font-size:26px;font-weight:900;margin-bottom:20px">📊 Overview</h2>
+
+      <div class="stat-row">
+        <div class="stat-box"><div class="n" id="dTotalOrders">—</div><div class="l">Total Orders</div></div>
+        <div class="stat-box"><div class="n" id="dTotalRevenue">—</div><div class="l">Total Revenue</div></div>
+        <div class="stat-box"><div class="n" id="dTotalUsers">—</div><div class="l">Total Users</div></div>
+        <div class="stat-box"><div class="n" id="dTotalProducts">—</div><div class="l">Products</div></div>
+      </div>
+
+      <div class="chart-row">
+        <div class="chart-box">
+          <h3><i class="fas fa-chart-line"></i> Orders — Last 7 Days</h3>
+          <canvas id="dashChart" height="180"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3><i class="fas fa-users"></i> Customer Gender</h3>
+          <canvas id="genderChart" height="180"></canvas>
+        </div>
+      </div>
+
+      <!-- Low Stock Alert -->
+      <div id="lowStockAlert" style="display:none;background:rgba(232,184,109,.06);border:1px solid rgba(232,184,109,.2);border-radius:var(--r);padding:16px;margin-bottom:20px">
+        <h3 style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+          <i class="fas fa-exclamation-triangle"></i> Low Stock Alert
+        </h3>
+        <div id="lowStockList" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+
+      <!-- Recent orders -->
+      <div class="tbl-wrap">
+        <div class="tbl-head"><h3><i class="fas fa-clock"></i> Recent Orders</h3></div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>Order #</th><th>Customer</th><th>Amount</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+            <tbody id="dashOrders"><tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PRODUCTS ── -->
+    <div class="tab-section" id="tab-products">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <h2 style="font-family:var(--font-head);font-size:26px;font-weight:900">📦 Products</h2>
+        <button class="btn btn-gold" onclick="showTab('addproduct',document.querySelector('.side-link:nth-child(6)'))"><i class="fas fa-plus"></i> Add New</button>
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-head">
+          <h3><i class="fas fa-boxes"></i> All Products <span id="prodCount" style="color:var(--gold);margin-left:6px"></span></h3>
+          <input class="tbl-search" placeholder="🔍 Search products..." oninput="filterProds(this.value)">
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>Product</th><th>Gender</th><th>Category</th><th>Price</th><th>Badge</th><th>Stock</th><th>Actions</th></tr></thead>
+            <tbody id="prodTable"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ADD PRODUCT ── -->
+    <div class="tab-section" id="tab-addproduct">
+      <h2 style="font-family:var(--font-head);font-size:26px;font-weight:900;margin-bottom:20px" id="addProdTitle">➕ Add New Product</h2>
+      <div class="form-panel">
+        <h3><i class="fas fa-tshirt"></i> Product Details</h3>
+        <div class="form-grid">
+          <div class="fg"><label>Product Name *</label><input type="text" id="fName" placeholder="e.g. Classic White Shirt"></div>
+          <div class="fg"><label>Brand</label><input type="text" id="fBrand" placeholder="e.g. Elegance"></div>
+          <div class="fg"><label>Gender *</label>
+            <select id="fGender">
+              <option value="men">👔 Men</option><option value="women">👗 Women</option>
+              <option value="boys">👦 Boys</option><option value="girls">👧 Girls</option>
+              <option value="mid-age">🧑 Mid-Age</option>
+            </select>
+          </div>
+          <div class="fg"><label>Category *</label>
+            <select id="fCat">
+              <option value="shirts">Shirts</option><option value="tops">Tops</option>
+              <option value="pants">Pants</option><option value="jackets">Jackets</option>
+              <option value="dresses">Dresses</option><option value="skirts">Skirts</option>
+              <option value="suits">Suits</option><option value="sets">Sets</option>
+            </select>
+          </div>
+          <div class="fg"><label>Price (Rs.) *</label><input type="number" id="fPrice" placeholder="2800"></div>
+          <div class="fg"><label>Original Price (Rs.)</label><input type="number" id="fOld" placeholder="3500"></div>
+          <div class="fg"><label>Badge</label>
+            <select id="fBadge"><option value="">None</option><option value="new">✨ New Arrival</option><option value="sale">🔥 Sale</option></select>
+          </div>
+          <div class="fg"><label>Stock</label><input type="number" id="fStock" placeholder="100"></div>
+        </div>
+        <div class="fg"><label>Product Image</label>
+          <!-- Upload Button -->
+          <div id="imgUploadZone" onclick="document.getElementById('fpProdImg').click()"
+            style="height:140px;border:2px dashed rgba(255,255,255,.1);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;background:var(--bg2);margin-bottom:8px"
+            ondragover="event.preventDefault();this.style.borderColor='rgba(232,184,109,.5)'"
+            ondrop="handleImgDrop(event)"
+            onmouseout="this.style.borderColor='rgba(255,255,255,.1)'">
+            <img id="imgPrevImg" src="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+            <div id="imgUploadPlaceholder">
+              <i class="fas fa-cloud-upload-alt" style="font-size:28px;color:var(--muted)"></i>
+              <div style="font-size:13px;color:var(--muted)">Click to upload or drag & drop</div>
+              <div style="font-size:11px;color:var(--muted)">JPG, PNG — max 5MB</div>
+            </div>
+            <div id="imgChangeBtn" style="display:none;position:absolute;bottom:8px;right:8px">
+              <span style="background:rgba(0,0,0,.7);color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600">📷 Change</span>
+            </div>
+          </div>
+          <input type="file" id="fpProdImg" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleImgFile(this)">
+          <!-- OR URL option -->
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+            <div style="flex:1;height:1px;background:var(--border)"></div>
+            <span style="font-size:11px;color:var(--muted)">or paste URL</span>
+            <div style="flex:1;height:1px;background:var(--border)"></div>
+          </div>
+          <input type="text" id="fImg" placeholder="https://images.unsplash.com/..." oninput="prevImg()" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--text);font-family:var(--font-body);outline:none;margin-top:8px">
+        </div>
+        <div class="fg">
+          <label>Sizes & Stock <span style="color:var(--muted);font-weight:400;font-size:10px">(set stock per size)</span></label>
+          <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+            <select id="sizePreset" onchange="applyPreset()" style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;color:var(--text);font-family:var(--font-body);outline:none">
+              <option value="">— Quick select preset —</option>
+              <option value="XS,S,M,L,XL,XXL">Adults: XS,S,M,L,XL,XXL</option>
+              <option value="S,M,L,XL">Adults: S,M,L,XL</option>
+              <option value="28,30,32,34,36,38">Pants: 28-38</option>
+              <option value="24,26,28,30,32">Women pants: 24-32</option>
+              <option value="8Y,10Y,12Y,14Y,16Y">Youth: 8Y-16Y</option>
+              <option value="2Y,4Y,6Y,8Y,10Y">Kids: 2Y-10Y</option>
+            </select>
+            <button type="button" onclick="addCustomSize()" class="btn btn-outline btn-sm"><i class="fas fa-plus"></i> Add Size</button>
+          </div>
+          <div id="sizeStockGrid" style="display:flex;flex-direction:column;gap:6px"></div>
+          <input type="hidden" id="fSizes">
+        </div>
+        <div class="fg"><label>Description</label><textarea id="fDesc" placeholder="Product description..."></textarea></div>
+        <div style="display:flex;gap:10px;margin-top:4px">
+          <button class="btn btn-gold" onclick="saveProduct()" style="flex:1;justify-content:center"><i class="fas fa-save"></i> <span id="saveBtnTxt">Save Product</span></button>
+          <button class="btn btn-outline" onclick="resetProdForm()"><i class="fas fa-times"></i> Reset</button>
+        </div>
+        <div id="saveMsg" style="display:none;margin-top:12px;padding:10px;border-radius:8px;font-size:13px;text-align:center"></div>
+      </div>
+    </div>
+
+    <!-- ── ORDERS ── -->
+    <div class="tab-section" id="tab-orders">
+      <h2 style="font-family:var(--font-head);font-size:26px;font-weight:900;margin-bottom:20px">🛍️ Orders</h2>
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-outline active" onclick="loadOrders('')">All</button>
+        <button class="btn btn-sm btn-outline" onclick="loadOrders('pending')">⏳ Pending</button>
+        <button class="btn btn-sm btn-outline" onclick="loadOrders('confirmed')">✅ Confirmed</button>
+        <button class="btn btn-sm btn-outline" onclick="loadOrders('shipped')">🚚 Shipped</button>
+        <button class="btn btn-sm btn-outline" onclick="loadOrders('delivered')">📦 Delivered</button>
+        <button class="btn btn-sm btn-outline" onclick="loadOrders('cancelled')">❌ Cancelled</button>
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-head"><h3><i class="fas fa-shopping-bag"></i> Orders <span id="orderCount" style="color:var(--gold)"></span></h3>
+          <input class="tbl-search" placeholder="🔍 Search orders..." oninput="filterOrders(this.value)">
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Amount</th><th>Payment</th><th>Status</th><th>Date</th><th>Update</th></tr></thead>
+            <tbody id="orderTable"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── USERS ── -->
+    <div class="tab-section" id="tab-users">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <h2 style="font-family:var(--font-head);font-size:26px;font-weight:900">👥 Customers</h2>
+        <button class="act-btn act-del" onclick="deleteDemoUsers()" style="padding:8px 16px;font-size:12px">
+          <i class="fas fa-trash"></i> Delete Demo Users
+        </button>
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-head">
+          <h3><i class="fas fa-users"></i> All Users <span id="userCount" style="color:var(--gold)"></span></h3>
+          <input class="tbl-search" placeholder="🔍 Search users..." oninput="filterUsers(this.value)">
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Gender</th><th>Role</th><th>Joined</th><th>Last Login</th><th>Action</th></tr></thead>
+            <tbody id="userTable"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TRYON HISTORY ── -->
+    <div class="tab-section" id="tab-tryon">
+      <h2 style="font-family:var(--font-head);font-size:26px;font-weight:900;margin-bottom:20px">👔 Try-On History</h2>
+      <div class="tbl-wrap">
+        <div class="tbl-head"><h3><i class="fas fa-camera"></i> Try-On Records <span id="tryonCount" style="color:var(--gold)"></span></h3></div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>Result</th><th>User</th><th>Product</th><th>Gender</th><th>Category</th><th>Provider</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody id="tryonTable"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  <!-- ── API KEYS ── -->
+  <div class="tab-section" id="tab-apikeys">
+    <h2 style="font-family:var(--font-head);font-size:26px;font-weight:900;margin-bottom:6px">🔑 API Keys</h2>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:24px">Manage your API keys — hidden from customers</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+      <!-- Fashn.ai Key -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:24px">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px">
+          <i class="fas fa-tshirt" style="color:var(--gold)"></i> Fashn.ai API Key
+        </h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Powers the Virtual Try-On feature</p>
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px">API Key</label>
+          <div style="display:flex;gap:8px">
+            <input type="password" id="adminFalKey" placeholder="fa-xxxxxxxxxxxxxxxxxxxxxxxx"
+              style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--font-body);outline:none">
+            <button class="act-btn act-view" onclick="toggleKeyVis('adminFalKey',this)" title="Show/Hide">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <button class="btn btn-gold btn-sm" onclick="saveApiKey('fal')" style="width:100%;justify-content:center">
+          <i class="fas fa-save"></i> Save Fashn.ai Key
+        </button>
+        <div id="falKeyMsg" style="display:none;margin-top:8px;font-size:12px"></div>
+        <div style="margin-top:12px;font-size:12px;color:var(--muted);line-height:1.8">
+          Get key: <a href="https://app.fashn.ai/api" target="_blank" style="color:var(--violet)">app.fashn.ai/api</a> → API Keys → Copy
+        </div>
+      </div>
+
+      <!-- Gemini Key -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:24px">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px">
+          <i class="fas fa-magic" style="color:var(--violet)"></i> Gemini API Key
+        </h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Powers AI Chat, Size Finder, Outfit Match</p>
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px">API Key</label>
+          <div style="display:flex;gap:8px">
+            <input type="password" id="adminGemKey" placeholder="AIzaSy..."
+              style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--font-body);outline:none">
+            <button class="act-btn act-view" onclick="toggleKeyVis('adminGemKey',this)" title="Show/Hide">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <button class="btn btn-gold btn-sm" onclick="saveApiKey('gem')" style="width:100%;justify-content:center">
+          <i class="fas fa-save"></i> Save Gemini Key
+        </button>
+        <div id="gemKeyMsg" style="display:none;margin-top:8px;font-size:12px"></div>
+        <div style="margin-top:12px;font-size:12px;color:var(--muted);line-height:1.8">
+          Get free key: <a href="https://aistudio.google.com" target="_blank" style="color:var(--violet)">aistudio.google.com</a> → Get API Key<br>
+          <span style="color:var(--gold)">⚠️ Set restriction to "None" for localhost</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Current Status -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-top:20px">
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+        <i class="fas fa-check-circle" style="color:var(--gold)"></i> Current Status
+      </h3>
+      <div id="apiStatusList" style="display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:13px;color:var(--muted)">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── WHATSAPP ALERTS ── -->
+  <div class="tab-section" id="tab-alerts">
+    <h2 style="font-family:var(--font-head);font-size:26px;font-weight:900;margin-bottom:20px">📱 WhatsApp Order Alerts</h2>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+
+      <!-- Config -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:24px">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+          <i class="fas fa-cog" style="color:var(--gold)"></i> Alert Configuration
+        </h3>
+
+        <div style="background:rgba(37,211,102,.05);border:1px solid rgba(37,211,102,.15);border-radius:10px;padding:14px;margin-bottom:18px">
+          <div style="font-size:13px;font-weight:700;color:#25D366;margin-bottom:8px">✅ How it works:</div>
+          <div style="font-size:12px;color:var(--muted);line-height:2">
+            <div>1. Customer places order on website</div>
+            <div>2. WhatsApp alert sent to your number</div>
+            <div>3. Message: Order #, Customer, Amount, Items</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px">Admin WhatsApp Number *</label>
+          <input type="text" id="waAdminNum" placeholder="+94771234567"
+            style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:var(--font-body);outline:none;box-sizing:border-box">
+          <div style="font-size:11px;color:var(--muted);margin-top:5px">Include country code: +94 for Sri Lanka</div>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px">Message Template</label>
+          <textarea id="waMsgTmpl" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text);font-family:var(--font-body);outline:none;height:100px;resize:vertical;box-sizing:border-box">🛍️ New Order Alert!
+Order #: {order_number}
+Customer: {customer_name}
+Amount: Rs. {amount}
+Payment: {payment_method}
+Time: {time}
+
+Login to admin panel to process.</textarea>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-gold" onclick="saveWaConfig()" style="flex:1;justify-content:center">
+            <i class="fas fa-save"></i> Save Config
+          </button>
+          <button class="btn btn-outline" onclick="sendTestWa()">
+            <i class="fab fa-whatsapp"></i> Send Test
+          </button>
+        </div>
+        <div id="waConfigMsg" style="display:none;margin-top:10px;padding:10px;border-radius:8px;font-size:13px"></div>
+      </div>
+
+      <!-- Status + Recent Alerts -->
+      <div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-bottom:16px">
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+            <i class="fas fa-info-circle" style="color:var(--gold)"></i> Status
+          </h3>
+          <div id="waStatus" style="font-size:13px;color:var(--muted)">Loading...</div>
+        </div>
+
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:24px">
+          <h3 style="font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+            <i class="fas fa-bell" style="color:var(--gold)"></i> Auto-Alert on New Order
+          </h3>
+          <div style="font-size:13px;color:var(--muted);line-height:2">
+            <div>✅ Alert sent when: Customer places order</div>
+            <div>✅ Alert sent when: Payment confirmed</div>
+            <div>✅ Works with: COD, PayHere, Bank Transfer</div>
+          </div>
+          <div style="margin-top:14px;background:var(--bg2);border-radius:8px;padding:12px;font-size:12px;color:var(--muted)">
+            <strong style="color:var(--text)">For auto-send (Twilio):</strong><br>
+            1. <a href="https://www.twilio.com/whatsapp" target="_blank" style="color:var(--violet)">twilio.com/whatsapp</a> → Free trial<br>
+            2. Add TWILIO_SID + TWILIO_TOKEN to .env<br>
+            3. Restart python app.py<br><br>
+            <strong style="color:var(--text)">Without Twilio:</strong> Click "Send Test" to open WhatsApp manually.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="modal-bg" id="orderModal">
+  <div class="modal-box">
+    <h3>Order Details <button onclick="closeModal()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button></h3>
+    <div id="orderDetail"></div>
+  </div>
+</div>
+
+<script src="js/data.js?v=20260513"></script>
+<script>
+// ── BACKEND API (replaces Supabase direct calls) ──────────
+// ── Universal admin token getter ─────────────────────────
+function getAdminToken() {
+  // Try all token storage locations
+  return sessionStorage.getItem('vf_admin_token') || 
+         localStorage.getItem('vf_admin_token') ||
+         localStorage.getItem('vf_token') || '';
+}
+
+// ── Universal admin API fetch ──────────────────────────
+async function adminFetch(url, options = {}) {
+  const tok = getAdminToken();
+  const headers = { 'Content-Type': 'application/json', ...(options.headers||{}) };
+  if(tok) headers['Authorization'] = 'Bearer ' + tok;
+  const r = await fetch(url, { ...options, headers });
+  return r;
+}
+
+// Supabase anon key (public, read-only, RLS-protected in production)
+// This is the PUBLIC anon key - not the service_role key
+// All writes go through backend API with admin JWT verification
+const SB_URL = 'https://fcretwoovhfzeqziucca.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjcmV0d29vdmhmemVxeml1Y2NhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNTcxMTMsImV4cCI6MjA5MzgzMzExM30.anZCI0FnbFHZ_hU_ATqN_Fa4XUMfLk12xSWHDkdZbqA';
+const SB_H   = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+// Note: All destructive operations (create/update/delete) MUST go through /api/* backend
+// The SB_KEY above is only used for READ fallback when backend is loading
+
+// Route table names to backend API endpoints
+const TABLE_MAP = {
+  'products':      '/api/db/products',
+  'orders':        '/api/db/orders',
+  'order_items':   null, // fetched via order detail
+  'users':         '/api/db/users/list',
+  'tryon_history': '/api/db/tryon/list',
+  'analytics':     '/api/db/analytics/track',
+};
+
+async function sbGet(table, params) {
+  // Try backend first
+  const endpoint = TABLE_MAP[table];
+  if(endpoint) {
+    try {
+      const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+      const r = await fetch(endpoint + qs, { headers: {'Content-Type':'application/json'} });
+      if(r.ok) {
+        const d = await r.json();
+        // Backend returns {success:true, orders:[]} or {success:true, products:[]}
+        if(d.success) {
+          return d[table] || d.orders || d.products || d.users || d.list || d.items || [];
+        }
+      }
+    } catch(e) { console.warn('[API] falling back to SB for', table); }
+  }
+  // Fallback: direct Supabase
+  let url = SB_URL + '/rest/v1/' + table;
+  if(params) url += '?' + new URLSearchParams(params).toString();
+  try {
+    const r = await fetch(url, { headers: SB_H });
+    if(r.ok) return await r.json();
+    console.error('[SB]', table, r.status);
+  } catch(e) { console.error('[SB] network error', table); }
+  return [];
+}
+
+async function sbPost(table, data) {
+  // Try backend
+  const endpoint = TABLE_MAP[table];
+  if(endpoint && table === 'products') {
+    try {
+      const r = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+      if(r.ok) { const d = await r.json(); return d.product ? [d.product] : [d]; }
+    } catch(e) {}
+  }
+  // Fallback Supabase
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/' + table, { method:'POST', headers: SB_H, body: JSON.stringify(data) });
+    if(r.ok) return await r.json();
+  } catch(e) {}
+  return null;
+}
+
+async function sbPatch(table, match, data) {
+  // Order status update via backend
+  if(table === 'orders') {
+    const idMatch = match.match(/id=eq\.(\d+)/);
+    if(idMatch && data.order_status) {
+      try {
+        const r = await fetch('/api/db/orders/' + idMatch[1] + '/status', {
+          method:'PUT', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({status: data.order_status})
+        });
+        if(r.ok) return await r.json();
+      } catch(e) {}
+    }
+  }
+  // Product update via backend
+  if(table === 'products') {
+    const idMatch = match.match(/id=eq\.(\d+)/);
+    if(idMatch) {
+      try {
+        const r = await fetch('/api/db/products/' + idMatch[1], {
+          method:'PUT', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(data)
+        });
+        if(r.ok) return await r.json();
+      } catch(e) {}
+    }
+  }
+  // Fallback Supabase
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/' + table + '?' + match, { method:'PATCH', headers: SB_H, body: JSON.stringify(data) });
+    if(r.ok) return await r.json();
+  } catch(e) {}
+  return null;
+}
+
+async function sbDelete(table, match) {
+  // Product delete via backend
+  if(table === 'products') {
+    const idMatch = match.match(/id=eq\.(\d+)/);
+    if(idMatch) {
+      try {
+        const r = await fetch('/api/db/products/' + idMatch[1], { method:'DELETE' });
+        if(r.ok) return true;
+      } catch(e) {}
+    }
+  }
+  // Fallback Supabase
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/' + table + '?' + match, { method:'DELETE', headers: SB_H });
+    return r.ok;
+  } catch(e) {}
+  return false;
+}
+
+// ── AUTH ──────────────────────────────────────────────────
+function doLogout() { 
+  sessionStorage.removeItem('vf_admin');
+  sessionStorage.removeItem('vf_admin_token');
+  localStorage.removeItem('vf_token');
+  localStorage.removeItem('vf_user');
+  location.href = 'admin-login.html'; 
+}
+
+// ── INIT ─────────────────────────────────────────────────
+async function init() {
+  const sbEl = document.getElementById('sbStatus');
+  try {
+    // Use backend health check
+    const r = await fetch('/api/health');
+    const d = await r.json();
+    if(d.status === 'ok' && d.services && d.services.supabase === 'configured') {
+      sbEl.innerHTML = '<span style="color:var(--green)">✅ Backend Connected</span>';
+    } else {
+      sbEl.innerHTML = '<span style="color:var(--gold)">⚠️ Partial Connection</span>';
+    }
+  } catch(e) {
+    sbEl.innerHTML = '<span style="color:var(--red)">❌ Backend Offline</span>';
+  }
+  loadDashboard();
+  loadWaStatus();
+  loadApiKeyStatus();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  init(); // Already protected by redirect at top
+});
+
+// ── TAB SWITCH ────────────────────────────────────────────
+function showTab(name, el) {
+  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.side-link').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if(el) el.classList.add('active');
+
+  if(name === 'products')   loadProducts();
+  if(name === 'orders')     loadOrders('');
+  if(name === 'users')      loadUsers();
+  if(name === 'tryon')      loadTryon();
+  if(name === 'dashboard')  loadDashboard();
+  loadWaStatus();
+  loadApiKeyStatus();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────
+async function loadDashboard() {
+  // Use backend API for dashboard data
+  let orders=[], users=[], products=[], tryons=[];
+  try {
+    const r = await adminFetch('/api/db/analytics/dashboard');
+    if(r.ok) {
+      const d = await r.json();
+      if(d.success) {
+        orders = d.summary ? [] : (d.orders||[]);
+        users = d.users||[];
+        products = d.products||[];
+        // Update summary directly
+        if(d.summary) {
+          document.getElementById('dTotalOrders').textContent   = d.summary.total_orders||0;
+          document.getElementById('dTotalRevenue').textContent  = 'Rs. ' + (d.summary.total_revenue||0).toLocaleString();
+          document.getElementById('dTotalUsers').textContent    = d.summary.total_customers||0;
+          document.getElementById('dTotalProducts').textContent = d.summary.total_products||0;
+          document.getElementById('pendingBadge').textContent   = d.summary.pending_orders||0;
+          orders = d.recent_orders||[];
+          renderDashChart(d.orders||orders);
+          renderGenderChart(d.users||[]);
+          checkLowStock(d.products||[]);
+          renderRecentOrders(orders);
+          return;
+        }
+      }
+    }
+  } catch(e) { console.warn('Backend dashboard failed, using Supabase fallback'); }
+  
+  // Fallback to Supabase direct
+  [orders, users, products, tryons] = await Promise.all([
+    sbGet('orders',       { select: 'id,total_amount,order_status,customer_name,order_number,created_at', order: 'created_at.desc' }),
+    sbGet('users',        { select: 'id,gender' }),
+    sbGet('products',     { select: 'id', is_active: 'eq.true' }),
+    sbGet('tryon_history',{ select: 'id' })
+  ]);
+
+  const totalRev = (orders||[]).reduce((s,o) => s + (o.total_amount||0), 0);
+  const pending  = (orders||[]).filter(o => o.order_status === 'pending').length;
+
+  document.getElementById('dTotalOrders').textContent   = (orders||[]).length;
+  document.getElementById('dTotalRevenue').textContent  = 'Rs. ' + totalRev.toLocaleString();
+  document.getElementById('dTotalUsers').textContent    = (users||[]).length;
+  document.getElementById('dTotalProducts').textContent = (products||[]).length;
+  document.getElementById('pendingBadge').textContent   = pending;
+
+  // Charts
+  renderDashChart(orders||[]);
+  renderGenderChart(users||[]);
+
+  // Check low stock
+  checkLowStock(products||[]);
+
+  // Recent orders
+  renderRecentOrders((orders||[]).slice(0,8));
+}
+
+function renderRecentOrders(recent) {
+  document.getElementById('dashOrders').innerHTML = recent && recent.length
+    ? recent.map(o => `
+      <tr>
+        <td style="font-family:monospace;font-size:12px;color:var(--gold)">${o.order_number||'—'}</td>
+        <td>${o.customer_name||'—'}</td>
+        <td>Rs. ${(o.total_amount||0).toLocaleString()}</td>
+        <td><span class="badge b-${o.order_status||'pending'}">${o.order_status||'pending'}</span></td>
+        <td style="font-size:11px;color:var(--muted)">${o.created_at ? new Date(o.created_at).toLocaleDateString() : '—'}</td>
+        <td><button class="act-btn act-view" onclick="viewOrder(${o.id})"><i class="fas fa-eye"></i></button></td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">No orders yet 🛍️</td></tr>';
+}
+
+async function checkLowStock(products) {
+  const lowItems = [];
+  for(const p of products.slice(0,20)) {
+    try {
+      const res = await fetch('/api/stock/summary/' + p.id);
+      const data = await res.json();
+      if(data.low_stock?.length || data.out_of_stock?.length) {
+        data.out_of_stock.forEach(s => lowItems.push({ name: p.name, size: s.size, stock: 0, type: 'out' }));
+        data.low_stock.forEach(s => { if(s.stock > 0) lowItems.push({ name: p.name, size: s.size, stock: s.stock, type: 'low' }); });
+      }
+    } catch(e) {}
+  }
+
+  if(lowItems.length) {
+    document.getElementById('lowStockAlert').style.display = 'block';
+    document.getElementById('lowStockList').innerHTML = lowItems.slice(0,8).map(item => `
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px">
+        <span style="padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:${item.type==='out'?'rgba(255,107,107,.15)':'rgba(232,184,109,.15)'};color:${item.type==='out'?'var(--red)':'var(--gold)'}">
+          ${item.type==='out'?'OUT':'LOW'}
+        </span>
+        <span style="font-weight:600">${item.name}</span>
+        <span style="color:var(--muted)">Size: ${item.size}</span>
+        <span style="color:${item.type==='out'?'var(--red)':'var(--gold)'}">Stock: ${item.stock}</span>
+      </div>`).join('');
+  }
+}
+
+function renderDashChart(orders) {
+  const days = [], counts = [];
+  for(let i=6;i>=0;i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    days.push(d.toLocaleDateString('en',{weekday:'short'}));
+    const ds = d.toISOString().split('T')[0];
+    counts.push(orders.filter(o => o.created_at?.startsWith(ds)).length);
+  }
+  new Chart(document.getElementById('dashChart'), {
+    type:'line',
+    data:{ labels:days, datasets:[{ label:'Orders', data:counts, borderColor:'#e8b86d', backgroundColor:'rgba(232,184,109,.08)', borderWidth:2, fill:true, tension:0.4, pointBackgroundColor:'#e8b86d', pointRadius:4 }] },
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{ x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#666'}}, y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#666',stepSize:1}} } }
+  });
+}
+
+function renderGenderChart(users) {
+  const c = {men:0,women:0,boys:0,girls:0,'mid-age':0};
+  users.forEach(u => { if(c[u.gender]!==undefined) c[u.gender]++; });
+  const labels = Object.keys(c).filter(k=>c[k]>0);
+  if(!labels.length) return;
+  const colors = {men:'#7c6af7',women:'#e8b86d',boys:'#4cde8a',girls:'#f784b0','mid-age':'#60a5fa'};
+  new Chart(document.getElementById('genderChart'), {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data:labels.map(k=>c[k]), backgroundColor:labels.map(l=>colors[l]), borderWidth:0, hoverOffset:8 }] },
+    options:{ responsive:true, plugins:{legend:{position:'bottom',labels:{color:'#888',padding:12}}} }
+  });
+}
+
+// ── PRODUCTS ──────────────────────────────────────────────
+let allProds = [];
+async function loadProducts() {
+  allProds = await sbGet('products', { order: 'created_at.desc' }) || [];
+  document.getElementById('prodCount').textContent = '(' + allProds.length + ')';
+  renderProds(allProds);
+}
+
+function renderProds(list) {
+  document.getElementById('prodTable').innerHTML = list.length
+    ? list.map(p => `
+      <tr>
+        <td>
+          <div class="prod-row">
+            <img class="prod-thumb" src="${p.img||''}" onerror="this.style.display='none'">
+            <div>
+              <div style="font-weight:600;font-size:13px">${p.name}</div>
+              <div style="font-size:11px;color:var(--muted)">${p.brand||''}</div>
+            </div>
+          </div>
+        </td>
+        <td><span style="text-transform:capitalize">${p.gender}</span></td>
+        <td>${p.cat}</td>
+        <td>Rs. ${(p.price||0).toLocaleString()}${p.old_price?'<br><span style="font-size:11px;color:var(--muted);text-decoration:line-through">Rs.'+p.old_price.toLocaleString()+'</span>':''}</td>
+        <td>${p.badge ? '<span class="badge b-'+p.badge+'">'+p.badge+'</span>' : '<span style="color:var(--muted);font-size:12px">—</span>'}</td>
+        <td>${p.stock||100}</td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="act-btn act-edit" onclick="editProd(${p.id})"><i class="fas fa-pen"></i></button>
+          <button class="act-btn act-badge" onclick="toggleBadge(${p.id},'${p.badge||''}')"><i class="fas fa-tag"></i></button>
+          <button class="act-btn act-del" onclick="deleteProd(${p.id},'${p.name}')"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--muted)">No products — add some!</td></tr>';
+}
+
+function filterProds(q) {
+  const f = allProds.filter(p => p.name?.toLowerCase().includes(q.toLowerCase()) || p.brand?.toLowerCase().includes(q.toLowerCase()));
+  renderProds(f);
+}
+
+async function toggleBadge(id, current) {
+  const cycle = {'':'new','new':'sale','sale':''};
+  const next = cycle[current] || '';
+  await sbPatch('products', 'id=eq.'+id, { badge: next || null });
+  toast('Badge → ' + (next || 'none'));
+  loadProducts();
+}
+
+async function deleteProd(id, name) {
+  if(!confirm('Delete "' + name + '"?')) return;
+  await sbPatch('products', 'id=eq.'+id, { is_active: false });
+  toast('Product deleted', 'err');
+  loadProducts();
+}
+
+function editProd(id) {
+  const p = allProds.find(x => x.id === id);
+  if(!p) return;
+  editingProdId = id;
+  document.getElementById('addProdTitle').textContent = '✏️ Edit Product';
+  document.getElementById('saveBtnTxt').textContent   = 'Update Product';
+  // Load size stock
+  sizeStockData = {};
+  if(p.id) loadSizeStock(p.id);
+  else if(p.sizes) {
+    p.sizes.split(',').forEach(s => { sizeStockData[s.trim()] = { stock: 10, sold: 0 }; });
+    renderSizeGrid();
+  }
+  document.getElementById('fName').value  = p.name||'';
+  document.getElementById('fBrand').value = p.brand||'';
+  document.getElementById('fGender').value= p.gender||'men';
+  document.getElementById('fCat').value   = p.cat||'shirts';
+  document.getElementById('fPrice').value = p.price||'';
+  document.getElementById('fOld').value   = p.old_price||'';
+  document.getElementById('fBadge').value = p.badge||'';
+  document.getElementById('fStock').value = p.stock||100;
+  document.getElementById('fImg').value   = p.img||'';
+  document.getElementById('fSizes').value = p.sizes||'';
+  document.getElementById('fDesc').value  = p.description||'';
+  prevImg();
+  showTab('addproduct', null);
+}
+
+// ── SAVE PRODUCT ──────────────────────────────────────────
+let editingProdId = null;
+
+async function saveProduct() {
+  const name  = document.getElementById('fName').value.trim();
+  const price = parseInt(document.getElementById('fPrice').value);
+  if(!name)  { showSaveMsg('❌ Name required','err'); return; }
+  if(!price) { showSaveMsg('❌ Price required','err'); return; }
+
+  // Handle image — upload base64 to host if needed
+  let imgUrl = document.getElementById('fImg').value.trim();
+  if(window._prodImgBase64 && window._prodImgBase64.startsWith('data:')) {
+    showSaveMsg('⏳ Uploading image...','ok');
+    imgUrl = await uploadImgToHost(window._prodImgBase64);
+    window._prodImgBase64 = null;
+  sizeStockData = {};
+  renderSizeGrid();
+  }
+
+  const data = {
+    name, brand: document.getElementById('fBrand').value.trim()||'VirtualFit',
+    gender: document.getElementById('fGender').value,
+    cat:    document.getElementById('fCat').value,
+    price,  old_price: parseInt(document.getElementById('fOld').value)||null,
+    badge:  document.getElementById('fBadge').value||null,
+    stock:  parseInt(document.getElementById('fStock').value)||100,
+    img:    imgUrl,
+    sizes:  document.getElementById('fSizes').value.trim(),
+    description: document.getElementById('fDesc').value.trim(),
+    is_active: true
+  };
+
+  let result;
+  if(editingProdId) {
+    result = await sbPatch('products', 'id=eq.'+editingProdId, data);
+    showSaveMsg('✅ Product updated!','ok');
+  } else {
+    result = await sbPost('products', data);
+    showSaveMsg('✅ Product added!','ok');
+  }
+
+  if(result) {
+    const savedId = editingProdId || (result[0] && result[0].id);
+    if(savedId) await saveSizeStock(savedId);
+    resetProdForm();
+    toast(editingProdId ? 'Product updated!' : 'Product added!');
+    editingProdId = null;
+  } else showSaveMsg('❌ Save failed — check Supabase','err');
+}
+
+function resetProdForm() {
+  editingProdId = null;
+  document.getElementById('addProdTitle').textContent = '➕ Add New Product';
+  document.getElementById('saveBtnTxt').textContent   = 'Save Product';
+  ['fName','fBrand','fPrice','fOld','fImg','fSizes','fDesc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fGender').value = 'men';
+  document.getElementById('fCat').value    = 'shirts';
+  document.getElementById('fBadge').value  = '';
+  document.getElementById('fStock').value  = '100';
+  // Reset image upload
+  const imgPreviewImg = document.getElementById('imgPrevImg');
+  if(imgPreviewImg) { imgPreviewImg.src=''; imgPreviewImg.style.display='none'; }
+  const imgPlaceholder = document.getElementById('imgUploadPlaceholder');
+  if(imgPlaceholder) imgPlaceholder.style.display='flex';
+  const imgChangeBtn = document.getElementById('imgChangeBtn');
+  if(imgChangeBtn) imgChangeBtn.style.display='none';
+  window._prodImgBase64 = null;
+  sizeStockData = {};
+  renderSizeGrid();
+  document.getElementById('saveMsg').style.display = 'none';
+}
+
+function prevImg() {
+  const url = document.getElementById('fImg').value.trim();
+  document.getElementById('imgPrev').innerHTML = url
+    ? `<img src="${url}" onerror="this.parentNode.innerHTML='<span style=color:var(--red);font-size:12px>❌ Not found</span>'">`
+    : '<span style="color:var(--muted);font-size:12px">Image preview</span>';
+}
+
+function showSaveMsg(msg, type) {
+  const el = document.getElementById('saveMsg');
+  el.textContent = msg; el.style.display = 'block';
+  el.style.cssText = `display:block;padding:10px;border-radius:8px;font-size:13px;text-align:center;background:${type==='ok'?'rgba(76,222,138,.08)':'rgba(255,107,107,.08)'};color:${type==='ok'?'var(--green)':'var(--red)'};border:1px solid ${type==='ok'?'rgba(76,222,138,.2)':'rgba(255,107,107,.2)'}`;
+  setTimeout(()=>el.style.display='none',4000);
+}
+
+// ── ORDERS ────────────────────────────────────────────────
+let allOrders = [];
+async function loadOrders(status) {
+  try {
+    const qs = status ? '?status=' + status : '';
+    const r = await adminFetch('/api/db/orders' + qs);
+    const d = await r.json();
+    if(d.success) {
+      allOrders = d.orders || [];
+    } else {
+      allOrders = await sbGet('orders', { order: 'created_at.desc' }) || [];
+    }
+  } catch(e) {
+    allOrders = await sbGet('orders', { order: 'created_at.desc' }) || [];
+  }
+  document.getElementById('orderCount').textContent = '(' + allOrders.length + ')';
+  renderOrders(allOrders);
+}
+
+function renderOrders(list) {
+  document.getElementById('orderTable').innerHTML = list.length
+    ? list.map(o => `
+      <tr>
+        <td style="font-family:monospace;font-size:12px;color:var(--gold)">${o.order_number||'—'}</td>
+        <td><div style="font-weight:600">${o.customer_name||'—'}</div><div style="font-size:11px;color:var(--muted)">${o.customer_email||''}</div></td>
+        <td style="font-size:12px;color:var(--muted)">—</td>
+        <td>Rs. ${(o.total_amount||0).toLocaleString()}</td>
+        <td><span class="badge b-${o.payment_status||'pending'}">${o.payment_method||'cod'}</span></td>
+        <td><span class="badge b-${o.order_status||'pending'}">${o.order_status||'pending'}</span></td>
+        <td style="font-size:11px;color:var(--muted)">${o.created_at ? new Date(o.created_at).toLocaleDateString() : '—'}</td>
+        <td>
+          <select class="status-sel" onchange="updateOrderStatus(${o.id},this.value)">
+            <option ${o.order_status==='pending'?'selected':''}>pending</option>
+            <option ${o.order_status==='confirmed'?'selected':''}>confirmed</option>
+            <option ${o.order_status==='processing'?'selected':''}>processing</option>
+            <option ${o.order_status==='shipped'?'selected':''}>shipped</option>
+            <option ${o.order_status==='delivered'?'selected':''}>delivered</option>
+            <option ${o.order_status==='cancelled'?'selected':''}>cancelled</option>
+          </select>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">No orders yet 🛍️</td></tr>';
+}
+
+function filterOrders(q) {
+  const f = allOrders.filter(o =>
+    o.order_number?.includes(q) || o.customer_name?.toLowerCase().includes(q.toLowerCase()) || o.customer_email?.toLowerCase().includes(q.toLowerCase())
+  );
+  renderOrders(f);
+}
+
+async function updateOrderStatus(id, status) {
+  // Use backend API for status updates (requires admin JWT)
+  try {
+    const r = await adminFetch('/api/db/orders/' + id + '/status', {
+      method: 'PUT',
+      body: JSON.stringify({ status })
+    });
+    const d = await r.json();
+    if(!d.success) {
+      toast(d.error || 'Status update failed', 'err');
+      return;
+    }
+  } catch(e) {
+    // Fallback to Supabase direct
+    await sbPatch('orders', 'id=eq.'+id, { order_status: status });
+  }
+  toast('Order status → ' + status);
+}
+
+async function processRefund(orderId, orderNum, amount) {
+  if(!confirm('Process refund for order #' + orderNum + ' (Rs. ' + amount + ')?')) return;
+  const refRef = prompt('Enter refund reference number (bank/payment ref):');
+  if(refRef === null) return; // Cancelled
+  try {
+    const r = await adminFetch('/api/db/orders/' + orderId + '/refund', {
+      method: 'POST',
+      body: JSON.stringify({ refund_reference: refRef || 'N/A' })
+    });
+    const d = await r.json();
+    if(d.success) {
+      toast('✅ Refund processed for #' + orderNum);
+      loadOrders('');
+    } else {
+      toast(d.error || 'Refund failed', 'err');
+    }
+  } catch(e) {
+    toast('Connection error', 'err');
+  }
+}
+
+async function viewOrder(id) {
+  const adminTok = sessionStorage.getItem('vf_admin_token') || '';
+  let orders = [], items = [];
+  
+  // Try backend first
+  try {
+    const r = await fetch('/api/db/orders/' + id, {
+      headers: { 'Authorization': 'Bearer ' + adminTok }
+    });
+    const d = await r.json();
+    if(d.success) {
+      orders = [d.order];
+      items = d.items || [];
+    }
+  } catch(e) {}
+  
+  // Fallback to Supabase
+  if(!orders.length) {
+    orders = await sbGet('orders', { id: 'eq.'+id }) || [];
+    items  = await sbGet('order_items', { order_id: 'eq.'+id }) || [];
+  }
+  const o = orders[0];
+  if(!o) return;
+  document.getElementById('orderDetail').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div><div style="font-size:11px;color:var(--muted)">Order #</div><div style="font-weight:700;color:var(--gold)">${o.order_number}</div></div>
+      <div><div style="font-size:11px;color:var(--muted)">Status</div><span class="badge b-${o.order_status}">${o.order_status}</span></div>
+      <div><div style="font-size:11px;color:var(--muted)">Customer</div><div>${o.customer_name}</div></div>
+      <div><div style="font-size:11px;color:var(--muted)">Email</div><div>${o.customer_email||'—'}</div></div>
+      <div><div style="font-size:11px;color:var(--muted)">Phone</div><div>${o.customer_phone||'—'}</div></div>
+      <div><div style="font-size:11px;color:var(--muted)">City</div><div>${o.city||'—'}</div></div>
+      <div><div style="font-size:11px;color:var(--muted)">Total</div><div style="font-weight:700;color:var(--gold)">Rs. ${(o.total_amount||0).toLocaleString()}</div></div>
+      <div><div style="font-size:11px;color:var(--muted)">Payment</div><div>${o.payment_method||'cod'}</div></div>
+    </div>
+    ${o.address ? `<div style="margin-bottom:16px"><div style="font-size:11px;color:var(--muted)">Address</div><div>${o.address}</div></div>` : ''}
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Order Items</div>
+    ${items.length ? items.map(i => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg2);border-radius:8px;margin-bottom:6px">
+        <img src="${i.product_img||''}" style="width:40px;height:40px;border-radius:6px;object-fit:cover" onerror="this.style.display='none'">
+        <div style="flex:1"><div style="font-weight:600;font-size:13px">${i.product_name}</div><div style="font-size:11px;color:var(--muted)">Size: ${i.size||'—'} · Qty: ${i.quantity}</div></div>
+        <div style="font-weight:700;color:var(--gold)">Rs. ${(i.subtotal||0).toLocaleString()}</div>
+      </div>`).join('') : '<div style="color:var(--muted)">No items found</div>'}`;
+  document.getElementById('orderModal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('orderModal').classList.remove('open'); }
+
+// ── USERS ─────────────────────────────────────────────────
+let allUsers = [];
+async function loadUsers() {
+  try {
+    const r = await adminFetch('/api/db/users/list');
+    const d = await r.json();
+    if(d.success) {
+      allUsers = d.users || [];
+    } else {
+      allUsers = await sbGet('users', { order: 'created_at.desc', select: 'id,name,email,phone,gender,role,is_active,created_at,last_login' }) || [];
+    }
+  } catch(e) {
+    allUsers = await sbGet('users', { order: 'created_at.desc', select: 'id,name,email,phone,gender,role,is_active,created_at,last_login' }) || [];
+  }
+  document.getElementById('userCount').textContent = '(' + allUsers.length + ')';
+  renderUsers(allUsers);
+}
+
+function renderUsers(list) {
+  document.getElementById('userTable').innerHTML = list.length
+    ? list.map(u => `
+      <tr>
+        <td><div style="font-weight:600">${u.name||'—'}</div></td>
+        <td style="font-size:12px;color:var(--muted)">${u.email||'—'}</td>
+        <td style="font-size:12px">${u.phone||'—'}</td>
+        <td><span style="text-transform:capitalize">${u.gender||'—'}</span></td>
+        <td><span class="badge ${u.role==='admin'?'b-admin':'b-customer'}">${u.role||'customer'}</span></td>
+        <td style="font-size:11px;color:var(--muted)">${u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
+        <td style="font-size:11px;color:var(--muted)">${u.last_login ? new Date(u.last_login).toLocaleDateString() : 'Never'}</td>
+        <td>
+          <button class="act-btn act-del" onclick="deleteUser(${u.id},'${(u.name||'').replace(/'/g,'')}')" title="Delete user">
+            <i class="fas fa-trash"></i>
+          </button>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">No users yet</td></tr>';
+}
+
+async function deleteUser(id, name) {
+  if(!confirm('Delete user "' + name + '"?\nThis also removes their orders and try-on history.')) return;
+  await sbDelete('tryon_history', 'user_id=eq.' + id);
+  await sbDelete('wishlist',      'user_id=eq.' + id);
+  await sbDelete('users',         'id=eq.'      + id);
+  toast('User deleted', 'err');
+  loadUsers();
+}
+
+async function deleteDemoUsers() {
+  if(!confirm('Delete ALL demo/test accounts?\n(Users with demo@, test@, example@ emails)')) return;
+  const demoUsers = allUsers.filter(u =>
+    u.email && (
+      u.email.includes('demo') || u.email.includes('test') ||
+      u.email.includes('example') || u.email.includes('sample')
+    )
+  );
+  if(!demoUsers.length) { toast('No demo users found', 'err'); return; }
+  for(const u of demoUsers) {
+    await sbDelete('tryon_history', 'user_id=eq.' + u.id);
+    await sbDelete('wishlist',      'user_id=eq.' + u.id);
+    await sbDelete('users',         'id=eq.'      + u.id);
+  }
+  toast(demoUsers.length + ' demo user(s) deleted', 'err');
+  loadUsers();
+}
+
+function filterUsers(q) {
+  const f = allUsers.filter(u =>
+    u.name?.toLowerCase().includes(q.toLowerCase()) ||
+    u.email?.toLowerCase().includes(q.toLowerCase()) ||
+    u.phone?.includes(q) ||
+    u.city?.toLowerCase().includes(q.toLowerCase())
+  );
+  renderUsers(f);
+}
+
+// ── TRYON HISTORY ─────────────────────────────────────────
+async function loadTryon() {
+  const list = await sbGet('tryon_history', { order: 'created_at.desc', limit: '50' }) || [];
+  document.getElementById('tryonCount').textContent = '(' + list.length + ')';
+  document.getElementById('tryonTable').innerHTML = list.length
+    ? list.map(t => `
+      <tr>
+        <td>${t.result_url ? `<a href="${t.result_url}" target="_blank" style="color:var(--gold)"><img src="${t.result_url}" style="width:40px;height:40px;border-radius:6px;object-fit:cover" onerror="this.style.display='none'"> View</a>` : '—'}</td>
+        <td style="font-size:12px">${t.user_id||'Guest'}</td>
+        <td style="font-size:12px">${t.product_id||'—'}</td>
+        <td><span style="text-transform:capitalize">${t.gender||'—'}</span></td>
+        <td>${t.category||'—'}</td>
+        <td><span class="badge b-confirmed">${t.provider||'fashn'}</span></td>
+        <td><span class="badge ${t.status==='success'?'b-delivered':'b-cancelled'}">${t.status||'success'}</span></td>
+        <td style="font-size:11px;color:var(--muted)">${t.created_at ? new Date(t.created_at).toLocaleDateString() : '—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">No try-on history yet</td></tr>';
+}
+
+// ── SIZE STOCK MANAGEMENT ────────────────────────────────
+let sizeStockData = {};
+
+function applyPreset() {
+  const preset = document.getElementById('sizePreset').value;
+  if(!preset) return;
+  const sizes = preset.split(',');
+  sizeStockData = {};
+  sizes.forEach(s => { sizeStockData[s.trim()] = { stock: 10, sold: 0 }; });
+  renderSizeGrid();
+  document.getElementById('sizePreset').value = '';
+}
+
+function addCustomSize() {
+  const s = prompt('Enter size (e.g. XXL, 40, 18Y):');
+  if(s && s.trim()) {
+    sizeStockData[s.trim()] = { stock: 10, sold: 0 };
+    renderSizeGrid();
+  }
+}
+
+function renderSizeGrid() {
+  const grid = document.getElementById('sizeStockGrid');
+  const sizes = Object.keys(sizeStockData);
+
+  if(!sizes.length) {
+    grid.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px">No sizes added — select preset above</div>';
+    document.getElementById('fSizes').value = '';
+    return;
+  }
+
+  grid.innerHTML = sizes.map(size => {
+    const d = sizeStockData[size];
+    const isLow = d.stock <= 3 && d.stock > 0;
+    const isOut = d.stock === 0;
+    const color = isOut ? 'var(--red)' : isLow ? 'var(--gold)' : 'var(--green)';
+    return `
+    <div style="display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
+      <div style="font-size:14px;font-weight:800;min-width:40px;color:var(--text)">${size}</div>
+      <div style="flex:1;display:flex;align-items:center;gap:8px">
+        <label style="font-size:11px;color:var(--muted);white-space:nowrap">Stock:</label>
+        <input type="number" min="0" value="${d.stock}"
+          onchange="updateSizeStock('${size}', this.value)"
+          style="width:70px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:13px;font-weight:700;color:${color};font-family:var(--font-body);outline:none;text-align:center">
+        <span style="font-size:11px;color:var(--muted)">Sold: <strong style="color:var(--text)">${d.sold}</strong></span>
+        <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:${isOut?'rgba(255,107,107,.1)':isLow?'rgba(232,184,109,.1)':'rgba(76,222,138,.1)'};color:${color}">
+          ${isOut ? 'OUT' : isLow ? 'LOW' : 'OK'}
+        </span>
+      </div>
+      <button onclick="removeSize('${size}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px">✕</button>
+    </div>`;
+  }).join('');
+
+  // Update hidden fSizes
+  document.getElementById('fSizes').value = sizes.join(',');
+}
+
+function updateSizeStock(size, val) {
+  if(sizeStockData[size]) {
+    sizeStockData[size].stock = Math.max(0, parseInt(val) || 0);
+    // Re-render to update color
+    renderSizeGrid();
+  }
+}
+
+function removeSize(size) {
+  delete sizeStockData[size];
+  renderSizeGrid();
+}
+
+async function loadSizeStock(productId) {
+  try {
+    const res = await fetch('/api/stock/' + productId);
+    const data = await res.json();
+    sizeStockData = {};
+    (data.sizes || []).forEach(s => {
+      sizeStockData[s.size] = { stock: s.stock, sold: s.sold || 0 };
+    });
+    renderSizeGrid();
+  } catch(e) {
+    // Fallback: parse from sizes string
+    sizeStockData = {};
+    renderSizeGrid();
+  }
+}
+
+async function saveSizeStock(productId) {
+  const sizes = Object.entries(sizeStockData).map(([size, d]) => ({
+    size, stock: d.stock
+  }));
+  if(!sizes.length) return;
+  try {
+    await fetch('/api/stock/' + productId, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ sizes })
+    });
+  } catch(e) { console.error('Stock save failed:', e); }
+}
+
+// ── IMAGE UPLOAD ──────────────────────────────────────────
+function handleImgFile(input) {
+  if(!input.files[0]) return;
+  if(input.files[0].size > 5*1024*1024) { toast('Max 5MB!','err'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => setImgPreview(ev.target.result);
+  reader.readAsDataURL(input.files[0]);
+}
+
+function handleImgDrop(e) {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if(!file || !file.type.startsWith('image/')) return;
+  const reader = new FileReader();
+  reader.onload = ev => setImgPreview(ev.target.result);
+  reader.readAsDataURL(file);
+}
+
+function setImgPreview(dataUrl) {
+  const img = document.getElementById('imgPrevImg');
+  img.src = dataUrl;
+  img.style.display = 'block';
+  document.getElementById('imgUploadPlaceholder').style.display = 'none';
+  document.getElementById('imgChangeBtn').style.display = 'block';
+  document.getElementById('fImg').value = dataUrl; // store as base64
+  window._prodImgBase64 = dataUrl;
+}
+
+function prevImg() {
+  const url = document.getElementById('fImg').value.trim();
+  if(!url || url.startsWith('data:')) return;
+  // URL entered - show preview
+  document.getElementById('imgPrevImg').src = url;
+  document.getElementById('imgPrevImg').style.display = 'block';
+  document.getElementById('imgUploadPlaceholder').style.display = 'none';
+  document.getElementById('imgChangeBtn').style.display = 'block';
+  window._prodImgBase64 = null;
+  sizeStockData = {};
+  renderSizeGrid();
+}
+
+// Upload image to imgbb and get URL
+async function uploadImgToHost(base64data) {
+  const b64 = base64data.split(',')[1];
+  try {
+    const form = new FormData();
+    form.append('image', b64);
+    const res = await fetch('https://api.imgbb.com/1/upload?key=6d207e02198a847aa98d0a2a901485a5', {
+      method: 'POST', body: form
+    });
+    if(res.ok) {
+      const d = await res.json();
+      if(d.data?.url) return d.data.url;
+    }
+  } catch(e) {}
+  return base64data; // fallback: use base64 directly
+}
+
+// ── API KEY MANAGEMENT ───────────────────────────────────────
+function loadApiKeyStatus() {
+  fetch('/api/health').then(r => r.json()).then(data => {
+    const el = document.getElementById('apiStatusList');
+    if(!el) return;
+    const providers = data.providers || {};
+    const items = [
+      { name:'Fashn.ai (Virtual Try-On)', key:'fal',    icon:'fa-tshirt',  status: providers.fal    },
+      { name:'Gemini AI (Chat/Size/Style)', key:'gemini', icon:'fa-magic',   status: providers.gemini },
+    ];
+    el.innerHTML = items.map(item => `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg2);border-radius:8px">
+        <i class="fas ${item.icon}" style="color:var(--gold);width:16px"></i>
+        <span style="flex:1;font-size:13px">${item.name}</span>
+        <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;${item.status==='configured'?'background:rgba(76,222,138,.12);color:var(--green)':'background:rgba(255,107,107,.12);color:var(--red)'}">
+          ${item.status === 'configured' ? '✅ Connected' : '❌ Not Set'}
+        </span>
+      </div>`).join('');
+    // Load saved keys
+    const fk = localStorage.getItem('admin_fal_key');
+    const gk = localStorage.getItem('admin_gem_key');
+    if(fk && document.getElementById('adminFalKey')) document.getElementById('adminFalKey').value = fk;
+    if(gk && document.getElementById('adminGemKey')) document.getElementById('adminGemKey').value = gk;
+  }).catch(() => {});
+}
+
+function saveApiKey(type) {
+  const inp = type === 'fal' ? 'adminFalKey' : 'adminGemKey';
+  const msg = type === 'fal' ? 'falKeyMsg'   : 'gemKeyMsg';
+  const lsk = type === 'fal' ? 'admin_fal_key' : 'admin_gem_key';
+  const val = document.getElementById(inp)?.value.trim();
+  if(!val) { showKeyMsg(msg, '❌ Enter a key first', 'err'); return; }
+  localStorage.setItem(lsk, val);
+  // Also store in fal_key/gem_key for tryon page
+  localStorage.setItem(type === 'fal' ? 'fal_key' : 'gem_key', val);
+  showKeyMsg(msg, '✅ Key saved! Restart python app.py to apply', 'ok');
+  toast('Key saved!');
+}
+
+function toggleKeyVis(id, btn) {
+  const inp = document.getElementById(id);
+  if(!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.querySelector('i').className = inp.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+}
+
+function showKeyMsg(id, msg, type) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.textContent = msg;
+  el.style.cssText = 'display:block;padding:8px 10px;border-radius:6px;font-size:12px;' +
+    (type==='ok' ? 'background:rgba(76,222,138,.08);color:var(--green)' : 'background:rgba(255,107,107,.08);color:var(--red)');
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+// ── WHATSAPP ALERTS ────────────────────────────────────────
+function loadWaStatus() {
+  const num = localStorage.getItem('vf_admin_wa') || '';
+  const el  = document.getElementById('waStatus');
+  if(!el) return;
+  if(num) {
+    document.getElementById('waAdminNum').value = num;
+    el.innerHTML = '<span style="color:var(--green)">✅ Configured — alerts will be sent to: <strong>' + num + '</strong></span>';
+  } else {
+    el.innerHTML = '<span style="color:var(--gold)">⚠️ Not configured — enter your WhatsApp number above</span>';
+  }
+}
+
+function saveWaConfig() {
+  const num  = document.getElementById('waAdminNum').value.trim();
+  const tmpl = document.getElementById('waMsgTmpl').value.trim();
+  if(!num) { showWaMsg('Enter WhatsApp number first', 'err'); return; }
+  localStorage.setItem('vf_admin_wa', num);
+  localStorage.setItem('vf_admin_wa_tmpl', tmpl);
+  loadWaStatus();
+  showWaMsg('✅ WhatsApp alert config saved! Alerts will go to: ' + num, 'ok');
+  toast('WhatsApp config saved!');
+}
+
+function sendTestWa() {
+  const num = (document.getElementById('waAdminNum').value.trim() || localStorage.getItem('vf_admin_wa') || '').replace(/[\s+\-]/g,'');
+  if(!num) { showWaMsg('Enter WhatsApp number first', 'err'); return; }
+  const msg = '🛍️ VirtualFit Pro Test Alert!\n\nOrder #: VF' + Date.now().toString().slice(-8) + '\nCustomer: Test Customer\nAmount: Rs. 2,800\nPayment: COD\nTime: ' + new Date().toLocaleString() + '\n\n✅ WhatsApp alerts are working!';
+  window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(msg), '_blank');
+  toast('Opening WhatsApp...');
+}
+
+function showWaMsg(msg, type) {
+  const el = document.getElementById('waConfigMsg');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.cssText = 'display:block;padding:10px;border-radius:8px;font-size:13px;' +
+    (type === 'ok'
+      ? 'background:rgba(76,222,138,.06);border:1px solid rgba(76,222,138,.2);color:var(--green)'
+      : 'background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.2);color:var(--red)');
+  setTimeout(() => el.style.display = 'none', 5000);
+}
+</script>
+</body>
+</html>

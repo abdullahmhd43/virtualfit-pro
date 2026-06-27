@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin Login — VirtualFit Pro</title>
+<link rel="stylesheet" href="css/main.css?v=20260513">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+body{display:flex;align-items:center;justify-content:center;min-height:100vh;overflow:hidden}
+.login-wrap{width:100%;max-width:420px;padding:24px}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px;text-align:center}
+.logo{font-family:var(--font-head);font-size:28px;font-weight:900;margin-bottom:4px}
+.logo span{color:var(--gold)}
+.badge{display:inline-block;background:rgba(232,184,109,.12);border:1px solid rgba(232,184,109,.3);color:var(--gold);font-size:11px;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:24px;letter-spacing:1px}
+.fg{text-align:left;margin-bottom:16px}
+.fg label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
+.fg .inp{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-size:14px;color:var(--text);font-family:var(--font-body);outline:none;transition:border-color .2s;box-sizing:border-box}
+.fg .inp:focus{border-color:rgba(232,184,109,.5)}
+.err{background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.2);color:#ff8b8b;border-radius:8px;padding:10px;font-size:13px;margin-bottom:16px;display:none}
+.err.show{display:block}
+.hint{font-size:11px;color:var(--muted);margin-top:16px}
+.hint a{color:var(--violet);text-decoration:none}
+.attempts{font-size:11px;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="hero-bg"><div class="orb orb1"></div><div class="orb orb2"></div><div class="grid-bg"></div></div>
+
+<div class="login-wrap">
+  <div class="login-card">
+    <div style="font-size:48px;margin-bottom:12px">🔐</div>
+    <div class="logo">Virtual<span>Fit</span></div>
+    <div class="badge">ADMIN ACCESS</div>
+
+    <div class="err" id="errBox">❌ Wrong password. Please try again.</div>
+    <div class="err" id="lockBox" style="background:rgba(255,107,107,.1)">🔒 Too many attempts. Wait 30 seconds.</div>
+
+    <div class="fg">
+      <label>Admin Password</label>
+      <input type="password" class="inp" id="passInp" placeholder="Enter admin password"
+        onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+
+    <button class="btn btn-gold" onclick="doLogin()" id="loginBtn" style="width:100%;justify-content:center;padding:12px;font-size:15px">
+      <i class="fas fa-sign-in-alt"></i> Login to Admin
+    </button>
+
+    <div class="attempts" id="attemptsMsg"></div>
+
+    <div class="hint">
+      <a href="index.html"><i class="fas fa-arrow-left"></i> Back to Website</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── SECURE ADMIN LOGIN ────────────────────────────────────
+// Password: VirtualFit@2026  (SHA-256 hash stored — not the real password)
+const ADMIN_HASH = '92dda337bed93898288c72aaad6a0c5563a7152a3d47f9152bd90625326a36f8';
+let attempts = 0;
+let locked = false;
+
+// Already logged in? Redirect
+if(sessionStorage.getItem('vf_admin') === '1') {
+  location.href = 'admin.html';
+}
+
+async function doLogin() {
+  if(locked) return;
+  const pass = document.getElementById('passInp').value;
+  document.getElementById('errBox').classList.remove('show');
+  if(!pass) return;
+
+  // Hash the entered password and compare
+  const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass));
+  const hex  = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+
+  // Try backend JWT login for admin
+  try {
+    const r = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({email:'admin@virtualfit.com', password: pass})
+    });
+    const d = await r.json();
+    if(d.success && d.user && d.user.role === 'admin') {
+      sessionStorage.setItem('vf_admin', '1');
+      sessionStorage.setItem('vf_admin_time', Date.now());
+      sessionStorage.setItem('vf_admin_token', d.access_token||'');
+      localStorage.setItem('vf_user', JSON.stringify(d.user));
+      localStorage.setItem('vf_token', d.access_token||'');
+      // Also store in admin-specific key for redundancy
+      localStorage.setItem('vf_admin_token', d.access_token||'');
+      document.getElementById('loginBtn').innerHTML = '<i class="fas fa-check-circle"></i> Logged in! Redirecting...';
+      document.getElementById('loginBtn').style.background = 'var(--green)';
+      setTimeout(() => { location.href = 'admin.html'; }, 800);
+      return;
+    }
+    // Fallback: check hash for backward compat
+    if(hex === ADMIN_HASH) {
+      sessionStorage.setItem('vf_admin', '1');
+      sessionStorage.setItem('vf_admin_time', Date.now());
+      document.getElementById('loginBtn').innerHTML = '<i class="fas fa-check-circle"></i> Logged in! Redirecting...';
+      document.getElementById('loginBtn').style.background = 'var(--green)';
+      setTimeout(() => { location.href = 'admin.html'; }, 800);
+      return;
+    }
+  } catch(e) {
+    // Network error - fallback to hash
+    if(hex === ADMIN_HASH) {
+      sessionStorage.setItem('vf_admin', '1');
+      setTimeout(() => { location.href = 'admin.html'; }, 800);
+      return;
+    }
+  }
+  
+  // Wrong password
+  if(false) { // placeholder
+  } else {
+    attempts++;
+    document.getElementById('passInp').value = '';
+    document.getElementById('errBox').classList.add('show');
+    document.getElementById('attemptsMsg').textContent = attempts + ' failed attempt' + (attempts > 1 ? 's' : '');
+
+    if(attempts >= 5) {
+      locked = true;
+      document.getElementById('loginBtn').disabled = true;
+      document.getElementById('lockBox').classList.add('show');
+      document.getElementById('errBox').classList.remove('show');
+      let countdown = 30;
+      const timer = setInterval(() => {
+        countdown--;
+        document.getElementById('lockBox').textContent = '🔒 Too many attempts. Wait ' + countdown + ' seconds.';
+        if(countdown <= 0) {
+          clearInterval(timer);
+          locked = false; attempts = 0;
+          document.getElementById('loginBtn').disabled = false;
+          document.getElementById('lockBox').classList.remove('show');
+          document.getElementById('attemptsMsg').textContent = '';
+        }
+      }, 1000);
+    }
+  }
+}
+</script>
+</body>
+</html>

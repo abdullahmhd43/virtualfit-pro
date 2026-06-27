@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Shop — VirtualFit Pro</title>
+<link rel="stylesheet" href="css/main.css?v=20260513">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">Virtual<span>Fit</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="gallery.html" class="active">Shop</a></li>
+      <li><a href="tryon.html">Try-On</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="features.html">✨ AI Tools</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="cart.html" class="nav-icon"><i class="fas fa-shopping-bag"></i><span class="badge" id="cartBadge">0</span></a>
+      <a href="login.html" class="nav-icon" id="loginBtn"><i class="fas fa-user"></i></a>
+      <button class="nav-toggle" id="navToggle"><i class="fas fa-bars"></i></button>
+    </div>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <span class="sec-tag">Our Collection</span>
+  <h1>Shop Men · Women · Boys · Girls · Mid-Age</h1>
+  <p>Try any item virtually before you buy — AI size recommendations included</p>
+</div>
+
+<section class="section" style="padding-top:20px">
+  <div class="container">
+    <!-- Gender Tabs -->
+    <div class="gender-tabs">
+      <button class="gtab active" data-g="all"     onclick="setG('all',this)"><span class="gtab-icon">🛍️</span> All</button>
+      <button class="gtab"        data-g="men"     onclick="setG('men',this)"><span class="gtab-icon">👔</span> Men</button>
+      <button class="gtab"        data-g="women"   onclick="setG('women',this)"><span class="gtab-icon">👗</span> Women</button>
+      <button class="gtab"        data-g="boys"    onclick="setG('boys',this)"><span class="gtab-icon">👦</span> Boys</button>
+      <button class="gtab"        data-g="girls"   onclick="setG('girls',this)"><span class="gtab-icon">👧</span> Girls</button>
+      <button class="gtab"        data-g="mid-age" onclick="setG('mid-age',this)"><span class="gtab-icon">🧑</span> Mid-Age</button>
+    </div>
+
+    <!-- Controls -->
+    <div style="margin-bottom:16px">
+      <!-- Search + Sort row -->
+      <div class="gallery-bar" style="margin-bottom:12px">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchIn" placeholder="Search products, brands...">
+        </div>
+        <select class="sort-sel" id="sortSel">
+          <option value="new">✨ Newest</option>
+          <option value="price-asc">Price: Low → High</option>
+          <option value="price-desc">Price: High → Low</option>
+          <option value="rating">⭐ Best Rated</option>
+        </select>
+        <span class="results-count" id="resultCount">50 products</span>
+      </div>
+      <!-- Category chips row -->
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap">Category:</span>
+        <div class="filter-chips" id="catChips" style="display:flex;flex-wrap:wrap;gap:6px">
+          <button class="chip active" data-c="all">All</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="products-grid" id="galleryGrid"></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <p>&copy; 2025 VirtualFit Pro.</p>
+      <div class="f-social"><a href="#"><i class="fab fa-instagram"></i></a><a href="#"><i class="fab fa-twitter"></i></a></div>
+    </div>
+  </div>
+</footer>
+
+<script src="js/data.js?v=20260513"></script>
+<script>
+let activeGender = 'all';
+
+// Categories per gender
+const CAT_MAP = {
+  all:     ['all','shirts','tops','pants','jackets','dresses','skirts','suits','sets'],
+  men:     ['all','shirts','pants','jackets','suits'],
+  women:   ['all','tops','pants','jackets','dresses','skirts','suits','sets'],
+  boys:    ['all','shirts','tops','pants','jackets'],
+  girls:   ['all','tops','dresses','skirts','pants'],
+  'mid-age':['all','shirts','tops','pants','jackets','suits','sets']
+};
+
+const CAT_LABELS = {
+  all:'🛍️ All',
+  shirts:'👔 Shirts',
+  tops:'👕 Tops',
+  pants:'👖 Pants',
+  jackets:'🧥 Jackets',
+  dresses:'👗 Dresses',
+  skirts:'🩱 Skirts',
+  suits:'🤵 Suits',
+  sets:'👘 Sets'
+};
+
+function updateCatChips(g) {
+  const chips = document.getElementById('catChips');
+  if(!chips) return;
+  const cats = CAT_MAP[g] || CAT_MAP.all;
+  chips.innerHTML = cats.map((c,i) =>
+    `<button class="chip${i===0?' active':''}" data-c="${c}" onclick="setChip(this)">${CAT_LABELS[c]||c}</button>`
+  ).join('');
+}
+
+function setChip(btn) {
+  document.querySelectorAll('#catChips .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  rerender();
+}
+
+function setG(g, btn) {
+  activeGender = g;
+  document.querySelectorAll('.gtab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  updateCatChips(g);
+  rerender();
+}
+
+function rerender() {
+  const q   = (document.getElementById('searchIn')?.value || '').toLowerCase();
+  const cat = document.querySelector('#catChips .chip.active')?.dataset.c || 'all';
+  const sort= document.getElementById('sortSel')?.value || 'new';
+
+  let list = PRODUCTS.filter(p =>
+    (activeGender === 'all' || p.gender === activeGender) &&
+    (cat === 'all' || p.cat === cat) &&
+    (p.name.toLowerCase().includes(q) || (p.brand||'').toLowerCase().includes(q))
+  );
+
+  if(sort === 'price-asc')  list.sort((a,b) => a.price - b.price);
+  if(sort === 'price-desc') list.sort((a,b) => b.price - a.price);
+  if(sort === 'rating')     list.sort((a,b) => b.rating - a.rating);
+  if(sort === 'new')        list.sort((a,b) => (b.badge==='new'?1:0) - (a.badge==='new'?1:0));
+
+  const grid = document.getElementById('galleryGrid');
+  if(!grid) return;
+  grid.innerHTML = list.length
+    ? list.map(productCard).join('')
+    : '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted)"><div style="font-size:48px;margin-bottom:12px">🔍</div><h3>No products found</h3><p style="margin-top:8px">Try a different filter</p><a href="gallery.html" class="btn btn-gold" style="margin-top:16px">Show All</a></div>';
+
+  const rc = document.getElementById('resultCount');
+  if(rc) rc.textContent = list.length + ' products';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  updateBadge();
+  updateCatChips('all');
+  rerender();
+  document.getElementById('searchIn')?.addEventListener('input', rerender);
+  document.getElementById('sortSel')?.addEventListener('change', rerender);
+
+  // Mobile nav toggle
+  const toggle = document.getElementById('navToggle');
+  const links  = document.querySelector('.nav-links');
+  if(toggle && links) {
+    toggle.addEventListener('click', e => {
+      e.stopPropagation();
+      links.classList.toggle('open');
+      toggle.innerHTML = links.classList.contains('open') ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+    });
+    document.addEventListener('click', e => {
+      if(!toggle.contains(e.target) && !links.contains(e.target)) {
+        links.classList.remove('open');
+        toggle.innerHTML = '<i class="fas fa-bars"></i>';
+      }
+    });
+  }
+
+  window.addEventListener('scroll', () => document.getElementById('navbar')?.classList.toggle('scrolled', scrollY > 20));
+
+  // Pre-select gender from URL
+  const g = new URLSearchParams(location.search).get('g');
+  if(g) {
+    const btn = document.querySelector(`.gtab[data-g="${g}"]`);
+    if(btn) setG(g, btn);
+  }
+});
+</script>
+</body>
+</html>

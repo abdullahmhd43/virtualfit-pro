@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>My Profile — VirtualFit Pro</title>
+<link rel="stylesheet" href="css/main.css?v=20260513">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">Virtual<span>Fit</span></a>
+    <ul class="nav-links"><li><a href="index.html">Home</a></li><li><a href="gallery.html">Shop</a></li><li><a href="tryon.html">Try-On</a></li></ul>
+    <div class="nav-actions">
+      <a href="cart.html" class="nav-icon"><i class="fas fa-shopping-bag"></i><span class="badge" id="cartBadge">0</span></a>
+      <button class="nav-toggle" id="navToggle"><i class="fas fa-bars"></i></button>
+    </div>
+  </div>
+</nav>
+
+<div class="profile-page">
+  <div class="container">
+    <div class="profile-layout">
+      <div>
+        <div class="profile-card">
+          <div class="p-avatar" id="pInit">U</div>
+          <div class="p-name" id="pName">Loading...</div>
+          <div class="p-email" id="pEmail"></div>
+          <nav class="p-nav">
+            <a href="#" data-tab="ordersTab" class="active"><i class="fas fa-box"></i> My Orders</a>
+            <a href="#" data-tab="measTab"><i class="fas fa-ruler"></i> Measurements</a>
+            <a href="#" data-tab="settingsTab"><i class="fas fa-cog"></i> Settings</a>
+            <a href="#" id="logoutBtn" style="color:var(--red);margin-top:8px"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </nav>
+        </div>
+      </div>
+
+      <div>
+        <!-- Orders -->
+        <div class="tab-c on" id="ordersTab">
+          <div class="sec-card">
+            <h3>My Orders</h3>
+            <div id="ordersList">
+              <div style="text-align:center;padding:20px;color:var(--muted)"><i class="fas fa-circle-notch fa-spin"></i> Loading orders...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Measurements -->
+        <div class="tab-c" id="measTab">
+          <div class="sec-card">
+            <h3>My Body Measurements</h3>
+            <p style="color:var(--muted);font-size:13px;margin-bottom:20px">Save your measurements for faster AI size recommendations</p>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+              <div class="form-g"><label>Chest (cm)</label><input type="number" id="m_chest" placeholder="96"></div>
+              <div class="form-g"><label>Waist (cm)</label><input type="number" id="m_waist" placeholder="80"></div>
+              <div class="form-g"><label>Hips (cm)</label><input type="number" id="m_hips" placeholder="100"></div>
+              <div class="form-g"><label>Height (cm)</label><input type="number" id="m_height" placeholder="175"></div>
+              <div class="form-g"><label>Shoulder (cm)</label><input type="number" id="m_shoulder" placeholder="46"></div>
+              <div class="form-g"><label>Weight (kg)</label><input type="number" id="m_weight" placeholder="70"></div>
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <button class="btn btn-gold" onclick="saveMeas()"><i class="fas fa-save"></i> Save Measurements</button>
+              <a href="tryon.html" class="btn btn-outline"><i class="fas fa-camera"></i> Auto-Detect with AI Camera</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="tab-c" id="settingsTab">
+          <div class="sec-card">
+            <h3>Account Settings</h3>
+            <div class="form-row2">
+              <div class="form-g"><label>Full Name</label><input type="text" id="sName" placeholder="Your name"></div>
+              <div class="form-g"><label>Phone</label><input type="tel" id="sPhone" placeholder="+94 77 xxx xxxx"></div>
+            </div>
+            <div class="form-g"><label>Address</label><input type="text" id="sAddr" placeholder="Your delivery address"></div>
+            <button class="btn btn-gold" onclick="saveSettings()"><i class="fas fa-save"></i> Save Changes</button>
+          </div>
+          <div class="sec-card">
+            <h3>Change Password</h3>
+            <div class="form-g"><label>Current Password</label><input type="password" placeholder="••••••••"></div>
+            <div class="form-row2">
+              <div class="form-g"><label>New Password</label><input type="password" placeholder="Min 8 chars"></div>
+              <div class="form-g"><label>Confirm New</label><input type="password" placeholder="Repeat"></div>
+            </div>
+            <button class="btn btn-gold" onclick="toast('Password updated! ✅')"><i class="fas fa-key"></i> Update Password</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer"><div class="container"><div class="footer-bottom"><p>&copy; 2025 VirtualFit Pro.</p></div></div></footer>
+<script src="js/data.js?v=20260513"></script>
+<script>
+function saveMeas() {
+  const fields = ['chest','waist','hips','height','shoulder','weight'];
+  const meas = {};
+  fields.forEach(f => { const v = document.getElementById('m_'+f)?.value; if(v) meas[f] = parseFloat(v); });
+  const u = getUser() || {};
+  u.measurements = meas;
+  localStorage.setItem('vf_user', JSON.stringify(u));
+  toast('Measurements saved! ✅');
+}
+
+async function doCancelOrder(orderId, orderNum) {
+  if(!confirm('Cancel order #' + orderNum + '?')) return;
+  try {
+    const r = await authFetch('/api/db/orders/' + orderId + '/cancel', {method:'POST'});
+    const d = await r.json();
+    if(d.success) {
+      toast('Order #' + orderNum + ' cancelled ✅');
+      setTimeout(loadMyOrders, 1000);
+    } else {
+      toast(d.error || 'Cannot cancel this order', 'err');
+    }
+  } catch(e) {
+    toast('Connection error — please try again', 'err');
+  }
+}
+
+function saveSettings() {
+  const u = getUser() || {};
+  u.name = document.getElementById('sName').value || u.name;
+  u.phone = document.getElementById('sPhone').value || u.phone;
+  u.address = document.getElementById('sAddr').value || u.address;
+  localStorage.setItem('vf_user', JSON.stringify(u));
+  toast('Settings saved! ✅');
+}
+
+// ── FIX: Use backend API /api/db/orders/my (NOT Supabase direct) ──
+async function loadMyOrders() {
+  const u = getUser();
+  const el = document.getElementById('ordersList');
+  if(!u || !u.email) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Please <a href="login.html" style="color:var(--gold)">login</a> to view orders</div>';
+    return;
+  }
+  try {
+    const r = await authFetch('/api/db/orders/my');
+    if(!r.ok) {
+      el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Could not load orders. Please <a href="login.html" style="color:var(--gold)">login again</a>.</div>';
+      return;
+    }
+    const data = await r.json();
+    const orders = data.orders || [];
+    if(!orders.length) {
+      el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted)">No orders yet 🛍️ <a href="gallery.html" style="color:var(--gold)">Start shopping!</a></div>';
+      return;
+    }
+    const statusColor = { pending:'sb-yellow', confirmed:'sb-blue', processing:'sb-blue', packed:'sb-blue', shipped:'sb-blue', delivered:'sb-green', cancelled:'sb-red', refunded:'sb-red', refund_pending:'sb-yellow' };
+    const canCancel = s => ['pending','confirmed'].includes(s);
+    el.innerHTML = orders.map(o => `
+      <div class="order-row">
+        <div style="flex:1">
+          <strong style="color:var(--gold)">#${o.order_number||o.id}</strong>
+          <div style="font-size:11px;color:var(--muted)">${o.created_at ? new Date(o.created_at).toLocaleDateString() : ''} · ${(o.payment_method||'cod').toUpperCase()}</div>
+        </div>
+        <span class="sbadge ${statusColor[o.order_status]||'sb-yellow'}">${o.order_status||'pending'}</span>
+        <strong style="color:var(--gold)">Rs. ${(o.total_amount||0).toLocaleString()}</strong>
+        ${canCancel(o.order_status) ? `<button onclick="doCancelOrder(${o.id},'${o.order_number}')" style="background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);color:var(--red);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;margin-left:8px">Cancel</button>` : ''}
+      </div>`).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Could not load orders. Check connection.</div>';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const u = getUser();
+  if(!u) {
+    location.href = 'login.html?redirect=profile.html';
+    return;
+  }
+
+  // ── FIX: Populate profile card ──
+  const displayName = u.name || u.email || 'User';
+  document.getElementById('pName').textContent  = displayName;
+  document.getElementById('pEmail').textContent = u.email || '';
+  document.getElementById('pInit').textContent  = displayName.charAt(0).toUpperCase();
+
+  // Fill settings
+  if(document.getElementById('sName'))  document.getElementById('sName').value  = u.name  || '';
+  if(document.getElementById('sPhone')) document.getElementById('sPhone').value = u.phone || '';
+  if(document.getElementById('sAddr'))  document.getElementById('sAddr').value  = u.address || '';
+
+  // Fill measurements if saved
+  const meas = u.measurements || {};
+  ['chest','waist','hips','height','shoulder','weight'].forEach(f => {
+    if(meas[f] && document.getElementById('m_'+f)) document.getElementById('m_'+f).value = meas[f];
+  });
+
+  // ── FIX: Logout button ──
+  document.getElementById('logoutBtn')?.addEventListener('click', e => { e.preventDefault(); doLogout(); });
+
+  // ── FIX: Tab switching ──
+  document.querySelectorAll('.p-nav a[data-tab]').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelectorAll('.p-nav a').forEach(a => a.classList.remove('active'));
+      document.querySelectorAll('.tab-c').forEach(t => t.classList.remove('on'));
+      link.classList.add('active');
+      document.getElementById(link.dataset.tab)?.classList.add('on');
+    });
+  });
+
+  loadMyOrders();
+  window.addEventListener('scroll', () => document.getElementById('navbar')?.classList.toggle('scrolled', scrollY > 20));
+  updateBadge();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Register — VirtualFit Pro</title>
+<link rel="stylesheet" href="css/main.css?v=20260513">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 16px 40px}
+.auth-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px;width:100%;max-width:440px}
+.auth-box h2{font-family:var(--font-head);font-size:26px;font-weight:900;margin-bottom:6px;text-align:center}
+.auth-box>p{color:var(--muted);font-size:14px;text-align:center;margin-bottom:24px}
+.form-g{margin-bottom:14px}
+.form-g label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
+.form-g input,.form-g select{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text);font-family:var(--font-body);outline:none;transition:border-color .2s;box-sizing:border-box}
+.form-g input:focus{border-color:rgba(232,184,109,.5)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px}
+.alert-err{background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.2);color:#ff8b8b}
+.alert-ok{background:rgba(76,222,138,.06);border:1px solid rgba(76,222,138,.2);color:var(--green)}
+.auth-link{text-align:center;font-size:13px;color:var(--muted);margin-top:16px}
+.auth-link a{color:var(--gold)}
+.pw-strength{height:3px;border-radius:2px;margin-top:6px;transition:all .3s;background:var(--border)}
+</style>
+</head>
+<body>
+<div class="hero-bg"><div class="orb orb1"></div><div class="orb orb2"></div><div class="grid-bg"></div></div>
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">Virtual<span>Fit</span></a>
+    <div class="nav-actions"><a href="cart.html" class="nav-icon"><i class="fas fa-shopping-bag"></i><span class="badge" id="cartBadge">0</span></a></div>
+  </div>
+</nav>
+<div class="auth-page">
+  <div class="auth-box">
+    <div style="text-align:center;font-size:40px;margin-bottom:12px">🎉</div>
+    <h2>Create Account</h2>
+    <p>Join VirtualFit — try clothes before you buy!</p>
+    <div id="errMsg" class="alert alert-err" style="display:none"></div>
+    <div id="okMsg"  class="alert alert-ok"  style="display:none"></div>
+    <div class="form-g"><label>Full Name *</label><input type="text" id="rName" placeholder="Your full name"></div>
+    <div class="form-g"><label>Email Address *</label><input type="email" id="rEmail" placeholder="you@example.com"></div>
+    <div class="form-g"><label>Phone Number</label><input type="tel" id="rPhone" placeholder="+94 77 123 4567"></div>
+    <div class="form-row">
+      <div class="form-g"><label>Gender</label>
+        <select id="rGender">
+          <option value="men">👔 Men</option>
+          <option value="women">👗 Women</option>
+          <option value="boys">👦 Boys</option>
+          <option value="girls">👧 Girls</option>
+          <option value="mid-age">🧑 Mid-Age</option>
+        </select>
+      </div>
+      <div class="form-g"><label>City</label><input type="text" id="rCity" placeholder="Colombo"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-g"><label>Password *</label><input type="password" id="rPass" placeholder="Min 8 chars" oninput="checkPw(this.value)"></div>
+      <div class="form-g"><label>Confirm *</label><input type="password" id="rConf" placeholder="Repeat"></div>
+    </div>
+    <div class="pw-strength" id="pwBar"></div>
+    <div style="font-size:11px;color:var(--muted);margin:8px 0 14px">
+      By registering you agree to our <a href="privacy.html" style="color:var(--gold)">Privacy Policy</a>
+    </div>
+    <button class="btn btn-gold btn-full btn-lg" id="regBtn" onclick="doRegister()" style="border-radius:var(--rs);justify-content:center">
+      <i class="fas fa-user-plus"></i> Create Account
+    </button>
+    <div class="auth-link">Already have an account? <a href="login.html">Login →</a></div>
+  </div>
+</div>
+<script src="js/data.js?v=20260513"></script>
+<script>
+function checkPw(v){const bar=document.getElementById('pwBar');const s=v.length>=12&&/[A-Z]/.test(v)&&/[0-9]/.test(v)?'#4cde8a':v.length>=8?'#e8b86d':'#ff6b6b';bar.style.background=s;bar.style.width=Math.min(100,v.length*8)+'%';}
+
+async function doRegister(){
+  const name=document.getElementById('rName').value.trim();
+  const email=document.getElementById('rEmail').value.trim().toLowerCase();
+  const phone=document.getElementById('rPhone').value.trim();
+  const gender=document.getElementById('rGender').value;
+  const city=document.getElementById('rCity').value.trim();
+  const pass=document.getElementById('rPass').value;
+  const conf=document.getElementById('rConf').value;
+
+  if(!name||!email||!pass){showErr('Name, email and password required');return;}
+  if(pass.length<8){showErr('Password must be at least 8 characters');return;}
+  if(pass!==conf){showErr('Passwords do not match');return;}
+  if(!email.includes('@')){showErr('Enter valid email');return;}
+
+  const btn=document.getElementById('regBtn');
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-circle-notch fa-spin"></i> Creating account...';
+
+  try{
+    const r=await fetch('/api/auth/register',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,email,password:pass,phone,gender,city:city||''})
+    });
+    const d=await r.json();
+    if(!d.success){showErr(d.error||'Registration failed — try again');btn.disabled=false;btn.innerHTML='<i class="fas fa-user-plus"></i> Create Account';return;}
+
+    // Auto login after register
+    const lr=await fetch('/api/auth/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:pass})
+    });
+    const ld=await lr.json();
+    if(ld.success){
+      localStorage.setItem('vf_user',JSON.stringify(ld.user));
+      localStorage.setItem('vf_token',ld.access_token||'token_'+ld.user.id);
+    }
+
+    document.getElementById('okMsg').textContent='✅ Account created! Welcome, '+name+'!';
+    document.getElementById('okMsg').style.display='block';
+    document.getElementById('errMsg').style.display='none';
+    setTimeout(()=>location.href='index.html',1200);
+
+  }catch(e){showErr('Connection error — please try again');btn.disabled=false;btn.innerHTML='<i class="fas fa-user-plus"></i> Create Account';}
+}
+
+function showErr(m){document.getElementById('errMsg').textContent='❌ '+m;document.getElementById('errMsg').style.display='block';document.getElementById('okMsg').style.display='none';}
+document.addEventListener('DOMContentLoaded',()=>{updateBadge();window.addEventListener('scroll',()=>document.getElementById('navbar')?.classList.toggle('scrolled',scrollY>20));});
+</script>
+</body>
+</html>

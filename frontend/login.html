@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Login — VirtualFit Pro</title>
+<link rel="stylesheet" href="css/main.css?v=20260513">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:80px 16px 40px}
+.auth-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px;width:100%;max-width:420px}
+.auth-box h2{font-family:var(--font-head);font-size:26px;font-weight:900;margin-bottom:6px;text-align:center}
+.auth-box>p{color:var(--muted);font-size:14px;text-align:center;margin-bottom:24px}
+.form-g{margin-bottom:16px}
+.form-g label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
+.form-g input,.form-g select{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-size:14px;color:var(--text);font-family:var(--font-body);outline:none;transition:border-color .2s;box-sizing:border-box}
+.form-g input:focus{border-color:rgba(232,184,109,.5)}
+.inp-wrap{position:relative}
+.inp-wrap input{padding-left:38px}
+.inp-wrap .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none}
+.inp-wrap .eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);cursor:pointer}
+.alert{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px}
+.alert-err{background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.2);color:#ff8b8b}
+.alert-ok{background:rgba(76,222,138,.06);border:1px solid rgba(76,222,138,.2);color:var(--green)}
+.auth-div{text-align:center;font-size:12px;color:var(--muted);margin:16px 0;position:relative}
+.auth-div::before,.auth-div::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--border)}
+.auth-div::before{left:0}.auth-div::after{right:0}
+.auth-link{text-align:center;font-size:13px;color:var(--muted);margin-top:16px}
+.auth-link a{color:var(--gold)}
+.demo-row{display:flex;gap:8px;margin-bottom:16px}
+.demo-row .btn{flex:1;justify-content:center;font-size:12px}
+</style>
+</head>
+<body>
+<div class="hero-bg"><div class="orb orb1"></div><div class="orb orb2"></div><div class="grid-bg"></div></div>
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">Virtual<span>Fit</span></a>
+    <div class="nav-actions">
+      <a href="cart.html" class="nav-icon"><i class="fas fa-shopping-bag"></i><span class="badge" id="cartBadge">0</span></a>
+    </div>
+  </div>
+</nav>
+<div class="auth-page">
+  <div class="auth-box">
+    <div style="text-align:center;font-size:40px;margin-bottom:12px">👋</div>
+    <h2>Welcome Back</h2>
+    <p>Sign in to your VirtualFit account</p>
+    <div id="errMsg" class="alert alert-err" style="display:none"></div>
+    <div id="okMsg"  class="alert alert-ok"  style="display:none"></div>
+    <div class="form-g">
+      <label>Email Address</label>
+      <div class="inp-wrap"><i class="fas fa-envelope ic"></i>
+        <input type="email" id="lEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+    </div>
+    <div class="form-g">
+      <label>Password</label>
+      <div class="inp-wrap"><i class="fas fa-lock ic"></i>
+        <input type="password" id="lPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+        <span class="eye" onclick="togglePw(this)"><i class="fas fa-eye"></i></span>
+      </div>
+    </div>
+    <button class="btn btn-gold btn-full btn-lg" id="loginBtn" onclick="doLogin()" style="border-radius:var(--rs);justify-content:center">
+      <i class="fas fa-sign-in-alt"></i> Login
+    </button>
+    <div class="auth-div" style="margin-top:12px">or</div>
+    <div class="demo-row">
+      <button class="btn btn-ghost" onclick="demoLogin()"><i class="fas fa-user"></i> Demo</button>
+    </div>
+    <div class="auth-link">No account? <a href="register.html">Register →</a></div>
+  </div>
+</div>
+<script src="js/data.js?v=20260513"></script>
+<script>
+function togglePw(el){
+  const inp = el.parentNode.querySelector('input');
+  inp.type = inp.type==='password' ? 'text' : 'password';
+  el.querySelector('i').className = inp.type==='password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+}
+
+async function doLogin(){
+  const email = document.getElementById('lEmail').value.trim().toLowerCase();
+  const pass  = document.getElementById('lPass').value;
+  if(!email || !pass){ showErr('Enter email and password'); return; }
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Signing in...';
+
+  try{
+    const r = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({email, password: pass})
+    });
+    const data = await r.json();
+
+    if(!data.success){
+      showErr(data.error || 'Wrong email or password');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+      return;
+    }
+
+    const user = data.user;
+    localStorage.setItem('vf_user', JSON.stringify(user));
+    localStorage.setItem('vf_token', data.access_token || 'token_'+user.id);
+    // If admin, also set admin tokens
+    if(user.role === 'admin') {
+      sessionStorage.setItem('vf_admin', '1');
+      sessionStorage.setItem('vf_admin_token', data.access_token || '');
+      sessionStorage.setItem('vf_admin_time', Date.now());
+      localStorage.setItem('vf_admin_token', data.access_token || '');
+    }
+
+    document.getElementById('okMsg').textContent = '✅ Welcome, '+user.name+'!';
+    document.getElementById('okMsg').style.display = 'block';
+    document.getElementById('errMsg').style.display = 'none';
+
+    setTimeout(()=>{
+      const redirect = new URLSearchParams(location.search).get('redirect');
+      location.href = redirect || (user.role==='admin' ? 'admin.html' : 'index.html');
+    }, 900);
+
+  }catch(e){
+    showErr('Connection error — please try again');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+  }
+}
+
+function showErr(m){
+  document.getElementById('errMsg').textContent = '❌ '+m;
+  document.getElementById('errMsg').style.display = 'block';
+  document.getElementById('okMsg').style.display = 'none';
+}
+
+function demoLogin(){
+  const user = {id:2, name:'Demo Customer', email:'demo@virtualfit.com', role:'customer', gender:'men'};
+  localStorage.setItem('vf_user', JSON.stringify(user));
+  localStorage.setItem('vf_token', 'demo_token');
+  document.getElementById('okMsg').textContent = '✅ Welcome, Demo Customer!';
+  document.getElementById('okMsg').style.display = 'block';
+  setTimeout(()=>location.href='index.html', 900);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  updateBadge();
+  window.addEventListener('scroll',()=>document.getElementById('navbar')?.classList.toggle('scrolled',scrollY>20));
+  
+  // Show expired session message if redirected
+  const params = new URLSearchParams(location.search);
+  if(params.get('expired') === '1') {
+    showErr('Your session expired. Please log in again.');
+  }
+  if(params.get('redirect')) {
+    document.getElementById('okMsg') && (document.getElementById('okMsg').textContent = 'Please log in to continue');
+    document.getElementById('okMsg') && (document.getElementById('okMsg').style.display = 'block');
+  }
+});
+</script>
+</body>
+</html>

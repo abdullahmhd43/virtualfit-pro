@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>360° Try-On — VirtualFit Pro</title>
+<link rel="stylesheet" href="css/main.css?v=20260513">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.page360{padding:100px 0 60px;min-height:100vh}
+.layout360{display:grid;grid-template-columns:320px 1fr;gap:24px;align-items:start}
+
+/* UPLOAD PANEL */
+.up-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.up-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.up-head h4{font-size:14px;font-weight:600}
+.drop-z{height:160px;border:2px dashed rgba(255,255,255,.08);border-radius:10px;margin:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.drop-z:hover{border-color:rgba(232,184,109,.4);background:rgba(232,184,109,.03)}
+.drop-z.has-img{border:none;margin:0;border-radius:0;height:180px}
+.drop-z img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#0c0c14}
+
+/* VIEWER */
+.viewer-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.viewer-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.viewer-head h4{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+
+/* 360 STAGE */
+.stage360{position:relative;height:520px;background:linear-gradient(135deg,#0d0d18,#080812);display:flex;align-items:center;justify-content:center;overflow:hidden;user-select:none}
+.stage360 img.view-img{position:absolute;width:100%;height:100%;object-fit:contain;transition:opacity .35s ease,transform .35s ease;opacity:0;transform:scale(.96)}
+.stage360 img.view-img.active{opacity:1;transform:scale(1)}
+
+/* ROTATION CONTROLS */
+.rot-controls{padding:16px 18px;border-top:1px solid var(--border);background:var(--bg2)}
+.rot-slider-wrap{position:relative;margin-bottom:14px}
+.rot-track{height:6px;background:rgba(255,255,255,.08);border-radius:3px;cursor:pointer;position:relative;overflow:hidden}
+.rot-fill{height:100%;background:linear-gradient(90deg,#e8b86d,#c9803a);border-radius:3px;transition:width .1s}
+.rot-handle{position:absolute;top:50%;width:20px;height:20px;background:var(--gold);border-radius:50%;transform:translate(-50%,-50%);cursor:grab;box-shadow:0 2px 8px rgba(232,184,109,.4);transition:left .1s}
+.rot-handle:active{cursor:grabbing;transform:translate(-50%,-50%) scale(1.2)}
+
+.view-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.vbtn{padding:8px 18px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--bg2);color:var(--muted);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+.vbtn:hover{border-color:var(--border2);color:var(--text)}
+.vbtn.active{background:rgba(232,184,109,.12);border-color:rgba(232,184,109,.4);color:var(--gold)}
+
+/* AUTO ROTATE */
+.auto-row{display:flex;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap;gap:8px}
+.auto-toggle{display:flex;align-items:center;gap:8px;cursor:pointer}
+.toggle-sw{width:40px;height:22px;background:rgba(255,255,255,.1);border-radius:11px;position:relative;transition:background .2s}
+.toggle-sw.on{background:var(--gold)}
+.toggle-sw::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:left .2s}
+.toggle-sw.on::after{left:21px}
+.speed-sel{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--text);font-family:var(--font-body);outline:none}
+
+/* ANGLE LABEL */
+.angle-label{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:rgba(9,9,15,.7);backdrop-filter:blur(8px);color:var(--gold);font-size:12px;font-weight:700;padding:4px 14px;border-radius:20px;border:1px solid rgba(232,184,109,.2);letter-spacing:.5px}
+
+/* DRAG HINT */
+.drag-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(9,9,15,.6);color:var(--muted);font-size:11px;padding:4px 12px;border-radius:20px;pointer-events:none;transition:opacity .3s}
+
+/* LOADING OVERLAY */
+.load-overlay{position:absolute;inset:0;background:rgba(9,9,15,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:10}
+.load-overlay.hidden{display:none}
+.load-ring{width:60px;height:60px;border:3px solid rgba(232,184,109,.15);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-steps{display:flex;flex-direction:column;gap:6px;align-items:center}
+.lstep{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;transition:color .3s}
+.lstep.active{color:var(--gold)}
+.lstep.done{color:var(--green)}
+.lstep i{width:12px;font-size:10px}
+
+/* VIEW THUMBNAILS */
+.thumb-strip{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--border);overflow-x:auto}
+.view-thumb{width:72px;height:96px;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid var(--border);transition:all .2s;flex-shrink:0;background:var(--bg2);position:relative}
+.view-thumb:hover,.view-thumb.active{border-color:var(--gold)}
+.view-thumb img{width:100%;height:100%;object-fit:cover}
+.view-thumb .thumb-label{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.7);color:#fff;font-size:9px;font-weight:700;text-align:center;padding:3px;text-transform:uppercase;letter-spacing:.5px}
+
+/* RESULT ACTIONS */
+.res-actions{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--border);flex-wrap:wrap}
+
+/* DISCLAIMER */
+.disclaimer{background:rgba(232,184,109,.05);border:1px solid rgba(232,184,109,.15);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--muted);line-height:1.7;margin:0 14px 14px}
+
+@media(max-width:1024px){.layout360{grid-template-columns:1fr}}
+@media(max-width:600px){.stage360{height:380px}.view-btns{gap:6px}.vbtn{padding:6px 12px;font-size:11px}}
+</style>
+</head>
+<body>
+<div class="hero-bg"><div class="orb orb1"></div><div class="orb orb2"></div><div class="grid-bg"></div></div>
+
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">Virtual<span>Fit</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="gallery.html">Shop</a></li>
+      <li><a href="tryon.html">Try-On</a></li>
+      <li><a href="tryon360.html" class="active">360° View</a></li>
+      <li><a href="features.html">✨ AI Tools</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="cart.html" class="nav-icon"><i class="fas fa-shopping-bag"></i><span class="badge" id="cartBadge">0</span></a>
+    </div>
+  </div>
+</nav>
+
+<div class="page360">
+<div class="container">
+
+  <div class="sec-head" style="margin-bottom:28px">
+    <span class="sec-tag">🔄 360° AI View</span>
+    <h2>Multi-View Virtual Try-On</h2>
+    <p>See how the outfit looks from all angles — Front, Side, Back + 360° rotation</p>
+  </div>
+
+  <div class="layout360">
+
+    <!-- UPLOAD PANEL -->
+    <div>
+      <div class="up-panel" style="margin-bottom:16px">
+        <div class="up-head"><i class="fas fa-user" style="color:var(--violet)"></i><h4>Your Photo</h4><span style="margin-left:auto;font-size:10px;color:var(--muted);font-weight:700;background:var(--bg2);padding:3px 10px;border-radius:20px;border:1px solid var(--border)">Step 1</span></div>
+        <div class="drop-z" id="personZone" onclick="pick('person')">
+          <div style="font-size:28px;color:var(--muted)"><i class="fas fa-user-circle"></i></div>
+          <p style="font-size:13px;font-weight:600">Upload your photo</p>
+          <small style="font-size:11px;color:var(--muted)">Full body · front facing</small>
+          <img id="personImg" src="" alt="" style="display:none">
+        </div>
+        <div style="padding:0 14px 14px;display:flex;gap:8px">
+          <button class="cbtn cbtn-gold" style="flex:1;justify-content:center" onclick="pick('person')"><i class="fas fa-image"></i> Choose Photo</button>
+          <button class="cbtn cbtn-dark" onclick="openCam()"><i class="fas fa-camera"></i></button>
+        </div>
+      </div>
+
+      <div class="up-panel" style="margin-bottom:16px">
+        <div class="up-head"><i class="fas fa-tshirt" style="color:var(--gold)"></i><h4>Clothing Item</h4><span style="margin-left:auto;font-size:10px;color:var(--muted);font-weight:700;background:var(--bg2);padding:3px 10px;border-radius:20px;border:1px solid var(--border)">Step 2</span></div>
+        <div class="drop-z" id="clothZone" style="height:140px" onclick="pick('cloth')">
+          <div style="font-size:24px;color:var(--muted)"><i class="fas fa-tshirt"></i></div>
+          <p style="font-size:13px;font-weight:600">Upload clothing</p>
+          <img id="clothImg" src="" alt="" style="display:none">
+        </div>
+        <div style="padding:0 14px 14px">
+          <button class="cbtn cbtn-gold" style="width:100%;justify-content:center" onclick="pick('cloth')"><i class="fas fa-plus"></i> Choose Clothing</button>
+        </div>
+      </div>
+
+      <!-- Options -->
+      <div class="up-panel" style="margin-bottom:16px">
+        <div class="up-head"><i class="fas fa-sliders-h" style="color:var(--gold)"></i><h4>Options</h4></div>
+        <div style="padding:14px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Gender</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+            <div class="vbtn active" id="gMen"    onclick="selGender('men',this)">👔 Men</div>
+            <div class="vbtn" id="gWomen"  onclick="selGender('women',this)">👗 Women</div>
+            <div class="vbtn" id="gBoys"   onclick="selGender('boys',this)">👦 Boys</div>
+            <div class="vbtn" id="gGirls"  onclick="selGender('girls',this)">👧 Girls</div>
+          </div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">Garment Type</div>
+          <select id="catSel" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);font-family:var(--font-body);outline:none">
+            <option value="upper_body">Upper Body (Shirt/Top)</option>
+            <option value="lower_body">Lower Body (Pants)</option>
+            <option value="dresses">Dress</option>
+            <option value="full_body">Full Outfit</option>
+          </select>
+          <div style="margin-top:10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px">API Key</div>
+          <input type="password" id="apiKeyInp" placeholder="fa-xxxxxxxx (Fashn.ai key)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--text);font-family:var(--font-body);outline:none" value="">
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">Without key: Side/Back views only (AI generated)</div>
+        </div>
+      </div>
+
+      <button class="btn btn-gold" id="genBtn" onclick="generate360()" style="width:100%;justify-content:center;padding:14px;font-size:15px">
+        <i class="fas fa-rotate-right"></i> Generate 360° View
+      </button>
+
+      <div class="disclaimer" style="margin-top:12px;border-radius:8px">
+        <i class="fas fa-info-circle" style="color:var(--gold)"></i>
+        <strong style="color:var(--text)"> Front view:</strong> Real try-on (Fashn.ai)<br>
+        <strong style="color:var(--text)"> Side/Back:</strong> AI generated (similar outfit, not exact person)
+      </div>
+    </div>
+
+    <!-- 360 VIEWER -->
+    <div class="viewer-panel">
+      <div class="viewer-head">
+        <h4><i class="fas fa-rotate-right" style="color:var(--gold)"></i> 360° View</h4>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="viewerStatus" style="font-size:12px;color:var(--muted)">Upload photos to start</span>
+          <span id="viewerBadge" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(232,184,109,.12);color:var(--gold);border:1px solid rgba(232,184,109,.3)">0°</span>
+        </div>
+      </div>
+
+      <!-- Main Stage -->
+      <div class="stage360" id="stage"
+        onmousedown="startDrag(event)" ontouchstart="startDragTouch(event)"
+        onmousemove="onDrag(event)"   ontouchmove="onDragTouch(event)"
+        onmouseup="stopDrag()"        ontouchend="stopDrag()"
+        onmouseleave="stopDrag()">
+
+        <!-- Loading overlay -->
+        <div class="load-overlay" id="loadOverlay">
+          <div class="load-ring"></div>
+          <div style="font-size:15px;font-weight:600" id="loadTitle">Ready to generate</div>
+          <div class="load-steps">
+            <div class="pstep" id="ls1"><i class="fas fa-circle"></i> <span>Preparing images</span></div>
+            <div class="pstep" id="ls2"><i class="fas fa-circle"></i> <span>Fashn AI try-on (front)</span></div>
+            <div class="pstep" id="ls3"><i class="fas fa-circle"></i> <span>AI generating side view</span></div>
+            <div class="pstep" id="ls4"><i class="fas fa-circle"></i> <span>AI generating back view</span></div>
+          </div>
+        </div>
+
+        <!-- View images -->
+        <img class="view-img active" id="viewFront"  src="" alt="Front">
+        <img class="view-img"        id="viewAngle"  src="" alt="45°">
+        <img class="view-img"        id="viewSide"   src="" alt="Side">
+        <img class="view-img"        id="viewBack"   src="" alt="Back">
+        <img class="view-img"        id="viewSide2"  src="" alt="270°">
+
+        <div class="angle-label" id="angleLabel">0° — Front</div>
+        <div class="drag-hint" id="dragHint"><i class="fas fa-arrows-alt-h"></i> Drag to rotate</div>
+      </div>
+
+      <!-- Rotation Controls -->
+      <div class="rot-controls">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Rotation</span>
+          <span id="angleDeg" style="font-size:13px;font-weight:800;color:var(--gold)">0°</span>
+        </div>
+        <div class="rot-slider-wrap" id="sliderWrap">
+          <div class="rot-track" id="rotTrack" onclick="sliderClick(event)">
+            <div class="rot-fill" id="rotFill" style="width:0%"></div>
+          </div>
+          <div class="rot-handle" id="rotHandle" style="left:0%"
+            onmousedown="startSlider(event)" ontouchstart="startSliderTouch(event)"></div>
+        </div>
+
+        <div class="view-btns">
+          <div class="vbtn active" onclick="goToView(0,this)"><i class="fas fa-user"></i> Front 0°</div>
+          <div class="vbtn" onclick="goToView(45,this)">45°</div>
+          <div class="vbtn" onclick="goToView(90,this)"><i class="fas fa-arrow-right"></i> Side 90°</div>
+          <div class="vbtn" onclick="goToView(180,this)"><i class="fas fa-user" style="transform:scaleX(-1)"></i> Back 180°</div>
+          <div class="vbtn" onclick="goToView(270,this)">270°</div>
+        </div>
+
+        <div class="auto-row">
+          <div class="auto-toggle" onclick="toggleAuto()">
+            <div class="toggle-sw" id="autoToggle"></div>
+            <span style="font-size:12px;color:var(--muted)">Auto Rotate</span>
+          </div>
+          <select class="speed-sel" id="speedSel" onchange="setSpeed(this.value)">
+            <option value="2000">Slow</option>
+            <option value="1000" selected>Normal</option>
+            <option value="500">Fast</option>
+            <option value="200">Very Fast</option>
+          </select>
+          <button class="cbtn cbtn-dark" onclick="resetView()" style="font-size:11px"><i class="fas fa-home"></i> Front</button>
+        </div>
+      </div>
+
+      <!-- Thumbnails -->
+      <div class="thumb-strip">
+        <div class="view-thumb active" id="thumb0" onclick="goToView(0,null)" title="Front 0°">
+          <img id="thumbImg0" src="" onerror="this.style.display='none'" alt="">
+          <div class="thumb-label">Front</div>
+        </div>
+        <div class="view-thumb" id="thumb45" onclick="goToView(45,null)" title="45°">
+          <img id="thumbImg45" src="" onerror="this.style.display='none'" alt="">
+          <div class="thumb-label">45°</div>
+        </div>
+        <div class="view-thumb" id="thumb90" onclick="goToView(90,null)" title="Side 90°">
+          <img id="thumbImg90" src="" onerror="this.style.display='none'" alt="">
+          <div class="thumb-label">Side</div>
+        </div>
+        <div class="view-thumb" id="thumb180" onclick="goToView(180,null)" title="Back 180°">
+          <img id="thumbImg180" src="" onerror="this.style.display='none'" alt="">
+          <div class="thumb-label">Back</div>
+        </div>
+        <div class="view-thumb" id="thumb270" onclick="goToView(270,null)" title="270°">
+          <img id="thumbImg270" src="" onerror="this.style.display='none'" alt="">
+          <div class="thumb-label">270°</div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="res-actions" id="resActions" style="display:none">
+        <button class="cbtn cbtn-dark" onclick="downloadCurrent()"><i class="fas fa-download"></i> Save View</button>
+        <button class="cbtn cbtn-gold" onclick="doCart()"><i class="fas fa-shopping-bag"></i> Add to Cart</button>
+        <button class="cbtn cbtn-dark" onclick="shareView()"><i class="fas fa-share-alt"></i> Share</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Camera modal -->
+<div id="camModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:2000;align-items:center;justify-content:center">
+  <div style="background:var(--card);border-radius:var(--r);overflow:hidden;width:92%;max-width:480px">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+      <i class="fas fa-camera" style="color:var(--gold)"></i><h4 style="font-size:14px;font-weight:600">Take Photo</h4>
+      <button onclick="closeCam()" style="margin-left:auto;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <video id="camVid" autoplay playsinline muted style="width:100%;max-height:380px;display:block;background:#000"></video>
+    <canvas id="camCvs" style="display:none"></canvas>
+    <div style="padding:14px;display:flex;gap:10px;justify-content:center">
+      <button class="cbtn cbtn-gold" onclick="snap()" style="padding:10px 28px"><i class="fas fa-camera"></i> Capture</button>
+      <button class="cbtn cbtn-dark" onclick="closeCam()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fpPerson" accept="image/*" style="display:none">
+<input type="file" id="fpCloth"  accept="image/*" style="display:none">
+
+<script src="js/data.js?v=20260513"></script>
+<script>
+// ════════════════════════════════════════════════
+//  VirtualFit Pro — 360° Multi-View Try-On
+// ════════════════════════════════════════════════
+
+let personB64 = null, clothB64 = null;
+let selectedGender = 'men';
+let currentAngle = 0;
+let autoRotateTimer = null;
+let isAutoRotate = false;
+let isDragging = false, dragStartX = 0, dragStartAngle = 0;
+let isSliding = false;
+let camStream = null;
+
+// Views data
+const VIEWS = {
+  0:   { id:'viewFront',  label:'0° — Front',   thumb:'thumb0',   thumbImg:'thumbImg0'   },
+  45:  { id:'viewAngle',  label:'45° — Angle',  thumb:'thumb45',  thumbImg:'thumbImg45'  },
+  90:  { id:'viewSide',   label:'90° — Side',   thumb:'thumb90',  thumbImg:'thumbImg90'  },
+  180: { id:'viewBack',   label:'180° — Back',  thumb:'thumb180', thumbImg:'thumbImg180' },
+  270: { id:'viewSide2',  label:'270° — Side',  thumb:'thumb270', thumbImg:'thumbImg270' },
+};
+const VIEW_ANGLES = [0, 45, 90, 180, 270];
+
+// ── FILE HANDLING ─────────────────────────────────────────
+function pick(t) { document.getElementById(t==='person'?'fpPerson':'fpCloth').click(); }
+document.getElementById('fpPerson').addEventListener('change', e => { if(e.target.files[0]) readFile(e.target.files[0],'person'); });
+document.getElementById('fpCloth').addEventListener('change',  e => { if(e.target.files[0]) readFile(e.target.files[0],'cloth'); });
+
+function readFile(f, t) {
+  if(f.size > 10*1024*1024) { toast('Max 10MB','err'); return; }
+  const r = new FileReader();
+  r.onload = ev => setZone(ev.target.result, t);
+  r.readAsDataURL(f);
+}
+function setZone(url, t) {
+  if(t === 'person') {
+    personB64 = url;
+    document.getElementById('personImg').src = url;
+    document.getElementById('personImg').style.display = 'block';
+    document.getElementById('personZone').classList.add('has-img');
+    showPopup();
+  } else {
+    clothB64 = url;
+    document.getElementById('clothImg').src = url;
+    document.getElementById('clothImg').style.display = 'block';
+    document.getElementById('clothZone').classList.add('has-img');
+  }
+}
+
+// Gender popup
+function showPopup() {
+  const old = document.getElementById('gPop');
+  if(old) old.remove();
+  const d = document.createElement('div');
+  d.id = 'gPop';
+  d.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card);border:2px solid rgba(232,184,109,.4);border-radius:16px;padding:24px;z-index:99999;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.8);min-width:280px';
+  d.innerHTML = '<div style="font-size:28px;margin-bottom:8px">👤</div><div style="font-size:15px;font-weight:700;margin-bottom:4px">Who is in this photo?</div><div style="font-size:12px;color:var(--muted);margin-bottom:16px">Select for best results</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button onclick="selGenderPop(\'men\')"   style="padding:12px;border-radius:10px;background:rgba(232,184,109,.1);border:1px solid rgba(232,184,109,.3);color:var(--text);font-size:13px;font-weight:700;cursor:pointer">👔 Men</button><button onclick="selGenderPop(\'women\')" style="padding:12px;border-radius:10px;background:rgba(232,184,109,.1);border:1px solid rgba(232,184,109,.3);color:var(--text);font-size:13px;font-weight:700;cursor:pointer">👗 Women</button><button onclick="selGenderPop(\'boys\')"  style="padding:12px;border-radius:10px;background:rgba(232,184,109,.1);border:1px solid rgba(232,184,109,.3);color:var(--text);font-size:13px;font-weight:700;cursor:pointer">👦 Boys</button><button onclick="selGenderPop(\'girls\')" style="padding:12px;border-radius:10px;background:rgba(232,184,109,.1);border:1px solid rgba(232,184,109,.3);color:var(--text);font-size:13px;font-weight:700;cursor:pointer">👧 Girls</button></div>';
+  document.body.appendChild(d);
+  setTimeout(() => { document.addEventListener('click', function h(e){ if(!d.contains(e.target)){ d.remove(); document.removeEventListener('click',h); } }); }, 200);
+}
+function selGenderPop(g) {
+  const pop = document.getElementById('gPop'); if(pop) pop.remove();
+  selGender(g, document.getElementById('g'+g.charAt(0).toUpperCase()+g.slice(1)));
+  toast('✅ ' + g + ' selected!');
+}
+function selGender(g, el) {
+  selectedGender = g;
+  document.querySelectorAll('[id^="g"][class~="vbtn"]').forEach(e => e.classList.remove('active'));
+  if(el) el.classList.add('active');
+}
+
+// ── CAMERA ────────────────────────────────────────────────
+function openCam() {
+  document.getElementById('camModal').style.display='flex';
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}})
+    .then(s=>{camStream=s;document.getElementById('camVid').srcObject=s;})
+    .catch(()=>{closeCam();toast('Camera denied','err');});
+}
+function snap(){
+  const v=document.getElementById('camVid'),c=document.getElementById('camCvs');
+  c.width=v.videoWidth;c.height=v.videoHeight;
+  c.getContext('2d').drawImage(v,0,0);
+  setZone(c.toDataURL('image/jpeg',0.9),'person');
+  closeCam();
+}
+function closeCam(){
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  document.getElementById('camModal').style.display='none';
+}
+
+// ── COMPRESS ──────────────────────────────────────────────
+function compressImage(dataUrl, maxSize=800, quality=0.85) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      let w=img.width, h=img.height;
+      if(w>maxSize||h>maxSize){ if(w>h){h=Math.round(h*maxSize/w);w=maxSize;}else{w=Math.round(w*maxSize/h);h=maxSize;} }
+      c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(c.toDataURL('image/jpeg',quality));
+    };
+    img.onerror=()=>resolve(dataUrl);
+    img.src=dataUrl;
+  });
+}
+
+// ── GENERATE 360° ─────────────────────────────────────────
+async function generate360() {
+  if(!personB64) { toast('Upload your photo first!','err'); return; }
+  if(!clothB64)  { toast('Upload clothing image!','err'); return; }
+
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Generating...';
+
+  // Show loading
+  document.getElementById('loadOverlay').classList.remove('hidden');
+  document.getElementById('loadTitle').textContent = 'Generating 360° views...';
+  document.getElementById('viewerStatus').textContent = 'Processing...';
+
+  setStep('ls1','active');
+
+  try {
+    const personComp = await compressImage(personB64, 800, 0.85);
+    const clothComp  = await compressImage(clothB64,  800, 0.85);
+
+    setStep('ls1','done');
+    setStep('ls2','active');
+
+    const apiKey = document.getElementById('apiKeyInp').value.trim() || localStorage.getItem('fal_key') || '';
+
+    const res = await fetch('/api/multiview', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        person_image: personComp,
+        cloth_image:  clothComp,
+        gender:       selectedGender,
+        category:     document.getElementById('catSel').value,
+        api_key:      apiKey
+      })
+    });
+
+    setStep('ls2','done');
+    setStep('ls3','active');
+
+    const data = await res.json();
+    if(!data.success) throw new Error(data.error || 'Generation failed');
+
+    setStep('ls3','done');
+    setStep('ls4','active');
+
+    await loadViews(data.views);
+
+    setStep('ls4','done');
+
+    document.getElementById('loadOverlay').classList.add('hidden');
+    document.getElementById('viewerStatus').textContent = '✅ 360° Ready! Drag to rotate';
+    document.getElementById('resActions').style.display = 'flex';
+    document.getElementById('dragHint').style.opacity = '1';
+    toast('✅ 360° view generated!');
+
+  } catch(e) {
+    document.getElementById('loadOverlay').classList.add('hidden');
+    document.getElementById('loadTitle').textContent = '❌ ' + e.message;
+    toast('Error: ' + e.message,'err');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-rotate-right"></i> Generate 360° View';
+}
+
+async function loadViews(views) {
+  const mapping = [
+    { angle:0,   key:'front',  fallback: personB64 },
+    { angle:45,  key:'angle',  fallback: null },
+    { angle:90,  key:'side',   fallback: null },
+    { angle:180, key:'back',   fallback: null },
+    { angle:270, key:'side2',  fallback: views.side },
+  ];
+
+  for(const m of mapping) {
+    const url = views[m.key] || m.fallback;
+    if(!url) continue;
+    const v = VIEWS[m.angle];
+    const imgEl = document.getElementById(v.id);
+    const thumbEl = document.getElementById(v.thumbImg);
+    await new Promise(resolve => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        imgEl.src = url;
+        if(thumbEl) thumbEl.src = url;
+        resolve();
+      };
+      img.onerror = () => {
+        // Use placeholder
+        imgEl.src = url;
+        if(thumbEl) thumbEl.src = url;
+        resolve();
+      };
+      img.src = url;
+    });
+  }
+
+  goToView(0, null);
+}
+
+function setStep(id, state) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.className = 'pstep ' + state;
+  const ic = el.querySelector('i');
+  if(!ic) return;
+  if(state === 'active') ic.className = 'fas fa-circle-notch fa-spin';
+  else if(state === 'done') ic.className = 'fas fa-check-circle';
+  else ic.className = 'fas fa-circle';
+}
+
+// ── 360° ROTATION ENGINE ─────────────────────────────────
+function getClosestAngle(angle) {
+  const normalized = ((angle % 360) + 360) % 360;
+  return VIEW_ANGLES.reduce((prev,curr) =>
+    Math.abs(curr-normalized) < Math.abs(prev-normalized) ? curr : prev
+  );
+}
+
+function goToView(angle, el) {
+  currentAngle = angle;
+  const normalized = ((angle % 360) + 360) % 360;
+  const closest = getClosestAngle(normalized);
+
+  // Update images
+  document.querySelectorAll('.view-img').forEach(img => img.classList.remove('active'));
+  const v = VIEWS[closest];
+  if(v) document.getElementById(v.id)?.classList.add('active');
+
+  // Update label
+  const labels = {0:'0° — Front',45:'45° — Angle',90:'90° — Side',180:'180° — Back',270:'270° — Side'};
+  document.getElementById('angleLabel').textContent = labels[closest] || normalized + '°';
+  document.getElementById('angleDeg').textContent   = normalized + '°';
+  document.getElementById('viewerBadge').textContent= normalized + '°';
+
+  // Update slider
+  const pct = (normalized/360*100);
+  document.getElementById('rotFill').style.width   = pct + '%';
+  document.getElementById('rotHandle').style.left  = pct + '%';
+
+  // Update view buttons
+  document.querySelectorAll('.view-btns .vbtn').forEach(b => b.classList.remove('active'));
+  if(el) el.classList.add('active');
+
+  // Update thumbnails
+  document.querySelectorAll('.view-thumb').forEach(t => t.classList.remove('active'));
+  if(v) document.getElementById(v.thumb)?.classList.add('active');
+}
+
+function rotateBy(delta) {
+  currentAngle = (((currentAngle + delta) % 360) + 360) % 360;
+  const closest = getClosestAngle(currentAngle);
+  goToView(closest, null);
+}
+
+// ── DRAG TO ROTATE ────────────────────────────────────────
+function startDrag(e) {
+  isDragging = true;
+  dragStartX = e.clientX;
+  dragStartAngle = currentAngle;
+  document.getElementById('dragHint').style.opacity = '0';
+}
+function onDrag(e) {
+  if(!isDragging) return;
+  const diff = e.clientX - dragStartX;
+  const newAngle = dragStartAngle + diff * 0.5;
+  const normalized = ((newAngle % 360) + 360) % 360;
+  const closest = getClosestAngle(normalized);
+  if(closest !== getClosestAngle(currentAngle)) {
+    currentAngle = closest;
+    goToView(closest, null);
+  }
+}
+function stopDrag() { isDragging = false; }
+
+// Touch events
+function startDragTouch(e) {
+  isDragging = true;
+  dragStartX = e.touches[0].clientX;
+  dragStartAngle = currentAngle;
+}
+function onDragTouch(e) {
+  if(!isDragging) return;
+  e.preventDefault();
+  const diff = e.touches[0].clientX - dragStartX;
+  const newAngle = dragStartAngle + diff * 0.5;
+  const normalized = ((newAngle % 360) + 360) % 360;
+  const closest = getClosestAngle(normalized);
+  if(closest !== getClosestAngle(currentAngle)) {
+    currentAngle = closest;
+    goToView(closest, null);
+  }
+}
+
+// ── SLIDER ────────────────────────────────────────────────
+function sliderClick(e) {
+  const track = document.getElementById('rotTrack');
+  const rect = track.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  const angle = Math.round(pct * 360);
+  const closest = getClosestAngle(angle);
+  currentAngle = closest;
+  goToView(closest, null);
+}
+function startSlider(e) { isSliding = true; e.preventDefault(); }
+function startSliderTouch(e) { isSliding = true; }
+document.addEventListener('mousemove', e => {
+  if(!isSliding) return;
+  const track = document.getElementById('rotTrack');
+  const rect = track.getBoundingClientRect();
+  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  const angle = Math.round(pct * 360);
+  const closest = getClosestAngle(angle);
+  currentAngle = closest;
+  goToView(closest, null);
+});
+document.addEventListener('mouseup', () => { isSliding = false; });
+document.addEventListener('touchmove', e => {
+  if(!isSliding) return;
+  const track = document.getElementById('rotTrack');
+  const rect = track.getBoundingClientRect();
+  const pct = Math.max(0, Math.min(1, (e.touches[0].clientX - rect.left) / rect.width));
+  const angle = Math.round(pct * 360);
+  currentAngle = getClosestAngle(angle);
+  goToView(currentAngle, null);
+});
+document.addEventListener('touchend', () => { isSliding = false; });
+
+// ── AUTO ROTATE ───────────────────────────────────────────
+function toggleAuto() {
+  isAutoRotate = !isAutoRotate;
+  const toggle = document.getElementById('autoToggle');
+  toggle.classList.toggle('on', isAutoRotate);
+  if(isAutoRotate) startAutoRotate();
+  else stopAutoRotate();
+}
+function setSpeed(ms) { if(isAutoRotate) { stopAutoRotate(); startAutoRotate(); } }
+function startAutoRotate() {
+  const speed = parseInt(document.getElementById('speedSel').value);
+  autoRotateTimer = setInterval(() => rotateBy(90), speed);
+}
+function stopAutoRotate() {
+  if(autoRotateTimer) { clearInterval(autoRotateTimer); autoRotateTimer = null; }
+}
+function resetView() { currentAngle = 0; goToView(0, document.querySelector('.view-btns .vbtn')); }
+
+// ── ACTIONS ───────────────────────────────────────────────
+function downloadCurrent() {
+  const v = VIEWS[getClosestAngle(currentAngle)];
+  const img = document.getElementById(v.id);
+  if(!img?.src || img.src === window.location.href) return;
+  const a = document.createElement('a');
+  a.href = img.src;
+  a.download = 'virtualfit-' + v.label.replace('°','deg').replace('—','').trim().replace(/\s+/g,'-') + '.jpg';
+  a.target = '_blank';
+  a.click();
+  toast('Downloading...');
+}
+function doCart() {
+  const id = parseInt(new URLSearchParams(location.search).get('id')) || 1;
+  const p = PRODUCTS.find(x => x.id === id) || PRODUCTS[0];
+  addToCart({id:p.id,name:p.name,price:p.price,img:p.img,size:'M',gender:p.gender});
+}
+function shareView() {
+  if(navigator.share) navigator.share({title:'VirtualFit 360° Try-On',url:location.href});
+  else { navigator.clipboard.writeText(location.href).then(()=>toast('URL copied!')); }
+}
+
+// ── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  updateBadge();
+  // Load saved key
+  const savedKey = localStorage.getItem('fal_key');
+  if(savedKey) document.getElementById('apiKeyInp').value = savedKey;
+  window.addEventListener('scroll', () => document.getElementById('navbar')?.classList.toggle('scrolled', scrollY > 20));
+  // Start loading overlay hidden
+  document.getElementById('loadTitle').textContent = 'Upload photos to generate 360° view';
+});
+</script>
+</body>
+</html>

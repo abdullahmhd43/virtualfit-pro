@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Contact Us — VirtualFit Pro</title>
+<link rel="stylesheet" href="css/main.css?v=20260513">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.ct-page{padding:100px 0 60px;min-height:100vh}
+/* Main layout */
+.ct-wrap{display:grid;grid-template-columns:1fr 420px;gap:28px;align-items:start}
+/* Cards */
+.ct-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:20px}
+.ct-card:last-child{margin-bottom:0}
+.ct-card h3{font-size:16px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px;color:var(--text)}
+.ct-card h3 i{color:var(--gold);width:20px;text-align:center}
+/* Form */
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px}
+.fg input,.fg select,.fg textarea{
+  width:100%;background:var(--bg2);border:1px solid var(--border);
+  border-radius:8px;padding:11px 14px;font-size:14px;color:var(--text);
+  font-family:var(--font-body);outline:none;transition:border-color .2s;
+  box-sizing:border-box;
+}
+.fg input:focus,.fg textarea:focus,.fg select:focus{border-color:rgba(232,184,109,.5)}
+.fg textarea{height:120px;resize:vertical}
+.fg select option{background:var(--bg2)}
+.frow2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+/* Buttons */
+.btn-wa{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  width:100%;padding:12px;background:#25D366;color:#fff;
+  border:none;border-radius:10px;font-size:14px;font-weight:700;
+  font-family:var(--font-body);cursor:pointer;text-decoration:none;
+  transition:background .2s;
+}
+.btn-wa:hover{background:#1da851}
+/* Info items */
+.info-list{display:flex;flex-direction:column;gap:12px}
+.info-item{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 16px;background:var(--bg2);
+  border-radius:12px;border:1px solid var(--border);
+  transition:border-color .2s;
+}
+.info-item:hover{border-color:rgba(232,184,109,.2)}
+.ii-icon{
+  width:42px;height:42px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.ii-body h4{font-size:14px;font-weight:600;margin-bottom:3px}
+.ii-body p{font-size:12px;color:var(--muted);line-height:1.5}
+/* FAQ */
+.faq-wrap{display:flex;flex-direction:column;gap:8px}
+.faq-item{border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.faq-q{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 16px;font-size:13px;font-weight:600;cursor:pointer;
+  transition:background .15s;
+}
+.faq-q:hover{background:rgba(255,255,255,.02)}
+.faq-q .ic{font-size:11px;color:var(--muted);transition:transform .25s;flex-shrink:0;margin-left:8px}
+.faq-a{font-size:13px;color:var(--muted);line-height:1.7;max-height:0;overflow:hidden;transition:all .3s;padding:0 16px}
+.faq-a.open{max-height:150px;padding:0 16px 13px}
+/* Alerts */
+.msg-ok{background:rgba(76,222,138,.06);border:1px solid rgba(76,222,138,.2);color:var(--green);border-radius:8px;padding:11px 14px;font-size:13px;margin-bottom:14px;display:none}
+.msg-err{background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.2);color:#ff8b8b;border-radius:8px;padding:11px 14px;font-size:13px;margin-bottom:14px;display:none}
+/* Responsive */
+@media(max-width:960px){.ct-wrap{grid-template-columns:1fr}}
+@media(max-width:480px){.frow2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="hero-bg"><div class="orb orb1"></div><div class="orb orb2"></div><div class="grid-bg"></div></div>
+
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">Virtual<span>Fit</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="gallery.html">Shop</a></li>
+      <li><a href="tryon.html">Try-On</a></li>
+      <li><a href="features.html">✨ AI Tools</a></li>
+      <li><a href="contact.html" class="active">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button id="navToggle" class="nav-toggle"><i class="fas fa-bars"></i></button>
+      <a href="cart.html" class="nav-icon"><i class="fas fa-shopping-bag"></i><span class="badge" id="cartBadge">0</span></a>
+      <a href="login.html" class="nav-icon"><i class="fas fa-user"></i></a>
+    </div>
+  </div>
+</nav>
+
+<div class="ct-page">
+<div class="container">
+
+  <div class="sec-head" style="margin-bottom:32px">
+    <span class="sec-tag">💬 Support</span>
+    <h2>Contact Us</h2>
+    <p>WhatsApp us for the fastest reply — we respond within minutes!</p>
+  </div>
+
+  <div class="ct-wrap">
+
+    <!-- LEFT: Send Message -->
+    <div>
+      <div class="ct-card">
+        <h3><i class="fas fa-paper-plane"></i> Send a Message</h3>
+        <div id="msgOk"  class="msg-ok"></div>
+        <div id="msgErr" class="msg-err"></div>
+        <div class="frow2">
+          <div class="fg"><label>Full Name *</label><input type="text" id="ctName" placeholder="Kasun Perera"></div>
+          <div class="fg"><label>Phone</label><input type="tel" id="ctPhone" placeholder="+94 77 123 4567"></div>
+        </div>
+        <div class="fg"><label>Email *</label><input type="email" id="ctEmail" placeholder="you@email.com"></div>
+        <div class="fg"><label>Subject</label>
+          <select id="ctSubject">
+            <option>📦 Order Inquiry</option>
+            <option>🔄 Return / Refund</option>
+            <option>📏 Size Help</option>
+            <option>🎨 Virtual Try-On Help</option>
+            <option>🔧 Technical Issue</option>
+            <option>💬 General Question</option>
+            <option>🤝 Partnership</option>
+          </select>
+        </div>
+        <div class="fg"><label>Message *</label><textarea id="ctMsg" placeholder="How can we help you today?"></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <button class="btn btn-gold" onclick="sendMsg()" id="sendBtn" style="justify-content:center">
+            <i class="fas fa-paper-plane"></i> Send Message
+          </button>
+          <button class="btn-wa" onclick="sendViaWa()">
+            <i class="fab fa-whatsapp" style="font-size:20px"></i> WhatsApp Us
+          </button>
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <div class="ct-card">
+        <h3><i class="fas fa-question-circle"></i> Frequently Asked Questions</h3>
+        <div class="faq-wrap" id="faqWrap"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Info + WhatsApp -->
+    <div>
+      <div class="ct-card">
+        <h3><i class="fab fa-whatsapp" style="color:#25D366"></i> Fastest Way to Reach Us</h3>
+        <a href="https://wa.me/94771234567?text=Hi%20VirtualFit%20Pro!" target="_blank" class="btn-wa" style="margin-bottom:20px">
+          <i class="fab fa-whatsapp" style="font-size:22px"></i> Chat on WhatsApp Now
+        </a>
+        <div class="info-list">
+          <div class="info-item">
+            <div class="ii-icon" style="background:rgba(37,211,102,.1);color:#25D366"><i class="fab fa-whatsapp"></i></div>
+            <div class="ii-body">
+              <h4>WhatsApp</h4>
+              <p>+94 77 123 4567<br>Mon–Sat · 9am–9pm</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="ii-icon" style="background:rgba(232,184,109,.1);color:var(--gold)"><i class="fas fa-envelope"></i></div>
+            <div class="ii-body">
+              <h4>Email</h4>
+              <p>support@virtualfit.lk<br>Reply within 24 hours</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="ii-icon" style="background:rgba(124,106,247,.1);color:var(--violet)"><i class="fas fa-clock"></i></div>
+            <div class="ii-body">
+              <h4>Business Hours</h4>
+              <p>Mon–Sat: 9am – 9pm<br>Sunday: 10am – 6pm</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="ii-icon" style="background:rgba(96,165,250,.1);color:#60a5fa"><i class="fas fa-map-marker-alt"></i></div>
+            <div class="ii-body">
+              <h4>Location</h4>
+              <p>Colombo, Sri Lanka<br>Island-wide delivery 🚚</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="ii-icon" style="background:rgba(76,222,138,.1);color:var(--green)"><i class="fas fa-undo"></i></div>
+            <div class="ii-body">
+              <h4>Returns Policy</h4>
+              <p>7-day easy returns<br>Unworn items only</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script src="js/data.js?v=20260513"></script>
+<script>
+const WA = '94771234567';
+const FAQS = [
+  {q:'How does Virtual Try-On work?', a:'Upload your photo + clothing image, click Generate. Fashn.ai AI shows how it looks on you in seconds!'},
+  {q:'Are my uploaded photos stored?', a:'No! Your photos are NEVER stored. Processed in real-time and immediately deleted. 100% private.'},
+  {q:'What are the delivery charges?', a:'Rs. 350 island-wide. Free delivery for orders above Rs. 5,000. Express delivery in Colombo Rs. 500.'},
+  {q:'Can I return or exchange items?', a:'Yes! 7 days from delivery. Items must be unworn in original packaging. WhatsApp us to start.'},
+  {q:'How to track my order?', a:'Login → My Profile → Orders to see real-time order status updates.'},
+  {q:'What payment methods do you accept?', a:'PayHere (Visa/Mastercard/AMEX), Cash on Delivery, and Bank Transfer. All secured with SSL.'},
+];
+
+document.getElementById('faqWrap').innerHTML = FAQS.map((f,i) => `
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(${i},this)">
+      <span>${f.q}</span>
+      <i class="fas fa-chevron-down ic" id="fic${i}"></i>
+    </div>
+    <div class="faq-a" id="fa${i}">${f.a}</div>
+  </div>`).join('');
+
+function toggleFaq(i, el) {
+  const ans = document.getElementById('fa'+i);
+  const ic  = document.getElementById('fic'+i);
+  const isOpen = ans.classList.contains('open');
+  document.querySelectorAll('.faq-a').forEach(a => a.classList.remove('open'));
+  document.querySelectorAll('.ic').forEach(c => c.style.transform = '');
+  if(!isOpen) { ans.classList.add('open'); ic.style.transform = 'rotate(180deg)'; }
+}
+
+async function sendMsg() {
+  const name  = document.getElementById('ctName').value.trim();
+  const email = document.getElementById('ctEmail').value.trim();
+  const phone = document.getElementById('ctPhone').value.trim();
+  const subj  = document.getElementById('ctSubject').value;
+  const msg   = document.getElementById('ctMsg').value.trim();
+
+  document.getElementById('msgErr').style.display = 'none';
+  document.getElementById('msgOk').style.display  = 'none';
+
+  if(!name || !email || !msg) {
+    document.getElementById('msgErr').textContent = '❌ Please fill Name, Email and Message';
+    document.getElementById('msgErr').style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Sending...';
+
+  try {
+    const res = await fetch('/api/whatsapp/contact', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({name, email, phone, subject: subj, message: msg})
+    });
+    const data = await res.json();
+    if(data.success) {
+      document.getElementById('msgOk').textContent = '✅ Message received! We\'ll reply within 24 hours.';
+      document.getElementById('msgOk').style.display = 'block';
+      document.getElementById('ctMsg').value = '';
+      toast('Message sent!');
+    }
+  } catch(e) {
+    // Fallback to WhatsApp
+    sendViaWa();
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Message';
+}
+
+function sendViaWa() {
+  const name  = document.getElementById('ctName').value.trim() || 'Customer';
+  const email = document.getElementById('ctEmail').value.trim();
+  const subj  = document.getElementById('ctSubject').value;
+  const msg   = document.getElementById('ctMsg').value.trim() || 'Hi VirtualFit Pro!';
+  const text  = `VirtualFit Pro Inquiry\n\n👤 ${name}\n📧 ${email}\n📋 ${subj}\n\n💬 ${msg}`;
+  window.open('https://wa.me/' + WA + '?text=' + encodeURIComponent(text), '_blank');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  updateBadge();
+  const toggle = document.getElementById('navToggle');
+  const links  = document.querySelector('.nav-links');
+  if(toggle && links) {
+    toggle.addEventListener('click', e => {
+      e.stopPropagation();
+      links.classList.toggle('open');
+      toggle.innerHTML = links.classList.contains('open') ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+    });
+    document.addEventListener('click', e => {
+      if(!toggle.contains(e.target) && !links.contains(e.target)) {
+        links.classList.remove('open');
+        toggle.innerHTML = '<i class="fas fa-bars"></i>';
+      }
+    });
+  }
+  window.addEventListener('scroll', () => document.getElementById('navbar')?.classList.toggle('scrolled', scrollY > 20));
+});
+</script>
+</body>
+</html>
